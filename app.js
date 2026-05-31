@@ -479,6 +479,12 @@
     { label: "Mentioned Budget", a: 2, b: 3, conf: 84, meaning: "A budget range was discussed and recorded.", evidence: "Meeting Notes + Pricing Request" },
     { label: "Waiting For Follow-up", a: 3, b: 5, conf: 90, meaning: "A pricing request has no response yet.", evidence: "Pricing Request + Follow-up Notes" }
   ];
+  // Mobile: fewer nodes (4 records, 3 relationships) — indices into the first 4 records
+  const KMAP_RELS_MOBILE = [
+    { label: "Same Visitor", a: 0, b: 1, conf: 92, meaning: "Marie Chen is the same visitor across both records.", evidence: "Visitor List + Partner Email" },
+    { label: "Mentioned Budget", a: 2, b: 3, conf: 84, meaning: "A budget range was discussed and recorded.", evidence: "Meeting Notes + Pricing Request" },
+    { label: "Waiting For Follow-up", a: 1, b: 3, conf: 90, meaning: "A pricing request has no response yet.", evidence: "Partner Email + Pricing Request" }
+  ];
   const C_RECORD = "#8b5cf6", C_REL = "#5b6cff", C_CTX = "#0ea5e9", C_ACT = "#14b8a6";
 
   function initKmap() {
@@ -492,8 +498,9 @@
 
     const W0 = kmapEl.clientWidth || 800, H0 = kmapEl.clientHeight || 440;
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, W0 / H0, 0.1, 1000);
-    camera.position.set(0, 6, 64);
+    const camera = new THREE.PerspectiveCamera(42, W0 / H0, 0.1, 1000);
+    // angled, pulled-back view so the layered depth reads clearly (not a flat cluster)
+    camera.position.set(26, 16, 62);
 
     let renderer;
     try {
@@ -506,20 +513,20 @@
     renderer.setSize(W0, H0);
     mount.appendChild(renderer.domElement);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-    const dir = new THREE.DirectionalLight(0xffffff, 0.5);
-    dir.position.set(20, 40, 30);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.95));
+    const dir = new THREE.DirectionalLight(0xffffff, 0.45);
+    dir.position.set(18, 40, 28);
     scene.add(dir);
 
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.rotateSpeed = 0.7;
-    controls.minDistance = 34;
-    controls.maxDistance = 108;
+    controls.minDistance = 44;
+    controls.maxDistance = 130;
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.8;
-    controls.target.set(0, 0, 0);
+    controls.autoRotateSpeed = 0.6;
+    controls.target.set(0, -1, 0);
 
     const hintEl = $("[data-kmap-hint]");
     controls.addEventListener("start", () => {
@@ -529,15 +536,14 @@
 
     // ----- helpers -----
     function nodeMesh(radius, hex, emissive) {
-      const m = new THREE.Mesh(
-        new THREE.SphereGeometry(radius, 28, 28),
-        new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: emissive, roughness: 0.45, metalness: 0.0 })
+      return new THREE.Mesh(
+        new THREE.SphereGeometry(radius, 32, 32),
+        new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: emissive, roughness: 0.5, metalness: 0.0 })
       );
-      return m;
     }
     function tube(p1, p2, hex, radius, opacity) {
       const mid = p1.clone().lerp(p2, 0.5);
-      mid.x *= 1.16; mid.z *= 1.16; // gentle outward bow
+      mid.x *= 1.12; mid.z *= 1.12; // gentle outward bow
       const curve = new THREE.QuadraticBezierCurve3(p1, mid, p2);
       const geo = new THREE.TubeGeometry(curve, 24, radius, 8, false);
       const mat = new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: opacity });
@@ -545,7 +551,7 @@
     }
     function makeLabel(text, hex, opts) {
       opts = opts || {};
-      const dpr = 2, font = 46, padX = 26, padY = 16;
+      const dpr = 2, font = 42, padX = 22, padY = 14;
       const c = document.createElement("canvas");
       const ctx = c.getContext("2d");
       ctx.font = "700 " + font + "px Inter, sans-serif";
@@ -569,86 +575,106 @@
       const tex = new THREE.CanvasTexture(c);
       tex.minFilter = THREE.LinearFilter; tex.anisotropy = 4;
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
-      const sH = opts.scale || 2.3, aspect = c.width / c.height;
+      const sH = opts.scale || 1.5, aspect = c.width / c.height;
       sp.scale.set(sH * aspect, sH, 1);
       sp.renderOrder = 20;
       return sp;
     }
 
-    // ----- layout (vertical layers) -----
-    const Y_REC = 14, Y_REL = 4, Y_CTX = -7, Y_ACT = -16, R_REC = 16;
-    const recPos = KMAP_RECORDS.map((_, i) => {
-      const a = (i / KMAP_RECORDS.length) * Math.PI * 2;
-      return new THREE.Vector3(Math.cos(a) * R_REC, Y_REC, Math.sin(a) * R_REC);
-    });
-    const ctxPos = new THREE.Vector3(0, Y_CTX, 0);
-    const actPos = new THREE.Vector3(0, Y_ACT, 0);
+    // ----- layout (vertical layers, widely spaced for clarity) -----
+    const Y_REC = 20, Y_REL = 6, Y_CTX = -8, Y_ACT = -20;
 
-    const pickables = [];   // objects that select a relationship
-    const relGroups = [];   // per-relationship { puck, tubes[] }
-
-    // record nodes
-    recPos.forEach((p, i) => {
-      const m = nodeMesh(1.35, C_RECORD, 0.25);
-      m.position.copy(p);
-      scene.add(m);
-      const lbl = makeLabel(KMAP_RECORDS[i].name, "#3a2d6b", { scale: 1.7 });
-      lbl.position.copy(p).y += 2.6;
-      scene.add(lbl);
-    });
-
-    // context + action nodes
-    const ctxMesh = nodeMesh(2.1, C_CTX, 0.4); ctxMesh.position.copy(ctxPos); scene.add(ctxMesh);
-    const ctxLbl = makeLabel("Context · High Purchase Intent", C_CTX, { pill: true, scale: 2.0 });
-    ctxLbl.position.copy(ctxPos).y -= 3.4; scene.add(ctxLbl);
-
-    const actMesh = nodeMesh(2.3, C_ACT, 0.45); actMesh.position.copy(actPos); scene.add(actMesh);
-    const actLbl = makeLabel("Action · Contact within 48h", C_ACT, { pill: true, scale: 2.0 });
-    actLbl.position.copy(actPos).y -= 3.6; scene.add(actLbl);
-
-    // context → action edge
-    scene.add(tube(ctxPos, actPos, C_CTX, 0.14, 0.5));
-
-    // relationships (the hero)
-    KMAP_RELS.forEach((rel, i) => {
-      const pa = recPos[rel.a], pb = recPos[rel.b];
-      const puckPos = pa.clone().add(pb).multiplyScalar(0.5);
-      puckPos.multiplyScalar(0.5); puckPos.y = Y_REL; // pull toward center, set layer
-      const puck = nodeMesh(2.5, C_REL, 0.55);
-      puck.position.copy(puckPos);
-      puck.userData.rel = i;
-      scene.add(puck);
-      pickables.push(puck);
-
-      const lbl = makeLabel(rel.label, C_REL, { pill: true, scale: 2.2 });
-      lbl.position.copy(puckPos).y += 3.4;
-      scene.add(lbl);
-
-      // edges: record→relationship (×2), relationship→context
-      const tubes = [];
-      const t1 = tube(pa, puckPos, C_REL, 0.16, 0.55); t1.userData.rel = i; scene.add(t1); tubes.push(t1); pickables.push(t1);
-      const t2 = tube(pb, puckPos, C_REL, 0.16, 0.55); t2.userData.rel = i; scene.add(t2); tubes.push(t2); pickables.push(t2);
-      const t3 = tube(puckPos, ctxPos, C_CTX, 0.14, 0.45); t3.userData.rel = i; scene.add(t3); tubes.push(t3);
-
-      relGroups.push({ puck, label: lbl, tubes });
-    });
-
-    // ----- selection / detail panel -----
+    const graph = new THREE.Group();
+    scene.add(graph);
     const detail = $("[data-kmap-detail]");
-    let selected = -1;
+    const dClose = $("[data-kmap-detail-close]");
+
+    let pickables = [];      // objects that select a relationship
+    let relGroups = [];      // per-relationship { puck, label, tubes[] }
+    let recordNodes = [];    // { mesh, label } — labels shown on hover only
+    let curRels = [];
+    let builtMobile = null;
+
+    function disposeObj(o) {
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
+    }
+    function clearGraph() {
+      while (graph.children.length) { const o = graph.children.pop(); disposeObj(o); }
+    }
 
     function setSelection(idx) {
-      selected = idx;
       relGroups.forEach((g, i) => {
         const on = idx < 0 || i === idx;
         gsap.to(g.puck.scale, { x: i === idx ? 1.35 : 1, y: i === idx ? 1.35 : 1, z: i === idx ? 1.35 : 1, duration: 0.3, ease: "back.out(2)" });
-        g.puck.material.emissiveIntensity = i === idx ? 0.8 : (idx < 0 ? 0.55 : 0.25);
-        g.label.material.opacity = on ? 1 : 0.25;
-        g.tubes.forEach((t) => { t.material.opacity = on ? (i === idx ? 0.9 : 0.45) : 0.12; });
+        g.puck.material.emissiveIntensity = i === idx ? 0.85 : (idx < 0 ? 0.6 : 0.28);
+        g.label.material.opacity = on ? 1 : 0.22;
+        g.tubes.forEach((t) => { t.material.opacity = on ? (i === idx ? 0.9 : 0.5) : 0.1; });
       });
     }
+
+    function build() {
+      clearGraph();
+      pickables = []; relGroups = []; recordNodes = [];
+      const mobile = isMobile();
+      builtMobile = mobile;
+      const records = mobile ? KMAP_RECORDS.slice(0, 4) : KMAP_RECORDS;
+      curRels = mobile ? KMAP_RELS_MOBILE : KMAP_RELS;
+      const R = mobile ? 12 : 15;
+
+      const recPos = records.map((_, i) => {
+        const a = (i / records.length) * Math.PI * 2 - Math.PI / 2;
+        return new THREE.Vector3(Math.cos(a) * R, Y_REC, Math.sin(a) * R);
+      });
+      const ctxPos = new THREE.Vector3(0, Y_CTX, 0);
+      const actPos = new THREE.Vector3(0, Y_ACT, 0);
+
+      // records — small; labels hidden until hover
+      recPos.forEach((p, i) => {
+        const m = nodeMesh(0.75, C_RECORD, 0.3);
+        m.position.copy(p); m.userData.rec = i; graph.add(m);
+        const lbl = makeLabel(records[i].name, "#3a2d6b", { scale: 1.25 });
+        lbl.position.copy(p); lbl.position.y += 1.9; lbl.visible = false; graph.add(lbl);
+        recordNodes.push({ mesh: m, label: lbl });
+      });
+
+      // context (medium-small) + action (medium)
+      const ctxMesh = nodeMesh(1.05, C_CTX, 0.45); ctxMesh.position.copy(ctxPos); graph.add(ctxMesh);
+      const ctxLbl = makeLabel("Context · High Purchase Intent", C_CTX, { pill: true, scale: 1.45 });
+      ctxLbl.position.copy(ctxPos); ctxLbl.position.y -= 2.5; graph.add(ctxLbl);
+
+      const actMesh = nodeMesh(1.3, C_ACT, 0.5); actMesh.position.copy(actPos); graph.add(actMesh);
+      const actLbl = makeLabel("Action · Contact within 48h", C_ACT, { pill: true, scale: 1.45 });
+      actLbl.position.copy(actPos); actLbl.position.y -= 2.8; graph.add(actLbl);
+
+      graph.add(tube(ctxPos, actPos, C_CTX, 0.08, 0.5));
+
+      // relationships — the hero (medium), always labelled
+      curRels.forEach((rel, i) => {
+        const pa = recPos[rel.a], pb = recPos[rel.b];
+        const puckPos = pa.clone().add(pb).multiplyScalar(0.5 * 0.6); // midpoint pulled inward
+        puckPos.y = Y_REL;
+        const puck = nodeMesh(1.4, C_REL, 0.6);
+        puck.position.copy(puckPos); puck.userData.rel = i; graph.add(puck); pickables.push(puck);
+
+        const lbl = makeLabel(rel.label, C_REL, { pill: true, scale: 1.55 });
+        lbl.position.copy(puckPos); lbl.position.y += 2.7; graph.add(lbl);
+
+        const tubes = [];
+        const t1 = tube(pa, puckPos, C_REL, 0.09, 0.55); t1.userData.rel = i; graph.add(t1); tubes.push(t1); pickables.push(t1);
+        const t2 = tube(pb, puckPos, C_REL, 0.09, 0.55); t2.userData.rel = i; graph.add(t2); tubes.push(t2); pickables.push(t2);
+        const t3 = tube(puckPos, ctxPos, C_CTX, 0.08, 0.45); t3.userData.rel = i; graph.add(t3); tubes.push(t3);
+
+        relGroups.push({ puck, label: lbl, tubes });
+      });
+
+      setSelection(-1);
+    }
+
+    // ----- detail panel -----
     function openDetail(idx) {
-      const rel = KMAP_RELS[idx];
+      const rel = curRels[idx];
+      if (!rel) return;
       $("[data-d-label]").textContent = rel.label;
       $("[data-d-meaning]").textContent = rel.meaning;
       $("[data-d-evidence]").textContent = rel.evidence;
@@ -657,14 +683,10 @@
       gsap.fromTo(detail, { opacity: 0, x: 14 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" });
       setSelection(idx);
     }
-    function closeDetail() {
-      detail.hidden = true;
-      setSelection(-1);
-    }
-    const dClose = $("[data-kmap-detail-close]");
+    function closeDetail() { detail.hidden = true; setSelection(-1); }
     if (dClose) dClose.addEventListener("click", closeDetail);
 
-    // ----- raycast click (distinguish from drag) -----
+    // ----- raycast click + hover -----
     const ray = new THREE.Raycaster();
     const ndc = new THREE.Vector2();
     let down = null;
@@ -673,50 +695,61 @@
       ndc.x = ((e.clientX - r.left) / r.width) * 2 - 1;
       ndc.y = -((e.clientY - r.top) / r.height) * 2 + 1;
     }
-    function pick() {
+    function pickRel() {
       ray.setFromCamera(ndc, camera);
       const hits = ray.intersectObjects(pickables, false);
       return hits.length ? hits[0].object.userData.rel : -1;
     }
+    function pickRecord() {
+      ray.setFromCamera(ndc, camera);
+      const hits = ray.intersectObjects(recordNodes.map((r) => r.mesh), false);
+      return hits.length ? hits[0].object.userData.rec : -1;
+    }
+    function hoverRecord(idx) { recordNodes.forEach((r, i) => { r.label.visible = i === idx; }); }
+
     renderer.domElement.addEventListener("pointerdown", (e) => { down = { x: e.clientX, y: e.clientY, t: Date.now() }; });
     renderer.domElement.addEventListener("pointerup", (e) => {
       if (!down) return;
       const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
       const quick = Date.now() - down.t < 450;
       down = null;
-      if (moved > 6 || !quick) return; // it was a drag, not a click
+      if (moved > 6 || !quick) return; // drag, not click
       pointerNDC(e);
-      const idx = pick();
+      const idx = pickRel();
       if (idx >= 0) openDetail(idx);
       else closeDetail();
     });
     renderer.domElement.addEventListener("pointermove", (e) => {
       pointerNDC(e);
-      renderer.domElement.style.cursor = pick() >= 0 ? "pointer" : "";
+      const rel = pickRel();
+      renderer.domElement.style.cursor = rel >= 0 ? "pointer" : "";
+      hoverRecord(rel >= 0 ? -1 : pickRecord()); // record labels only on hover
     });
+    renderer.domElement.addEventListener("pointerleave", () => hoverRecord(-1));
 
     // ----- render loop (paused when offscreen) -----
     let raf = null;
     function loop() { controls.update(); renderer.render(scene, camera); raf = requestAnimationFrame(loop); }
-    function start() { if (!raf) loop(); }
-    function stop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+    function startLoop() { if (!raf) loop(); }
+    function stopLoop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
     if ("IntersectionObserver" in window) {
-      new IntersectionObserver((ents) => { ents[0].isIntersecting ? start() : stop(); }, { threshold: 0.05 })
+      new IntersectionObserver((ents) => { ents[0].isIntersecting ? startLoop() : stopLoop(); }, { threshold: 0.05 })
         .observe(kmapEl);
-    } else { start(); }
+    } else { startLoop(); }
 
     window.addEventListener("resize", () => {
       const w = kmapEl.clientWidth, h = kmapEl.clientHeight;
       if (!w || !h) return;
       camera.aspect = w / h; camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      if (isMobile() !== builtMobile) { closeDetail(); build(); } // fewer nodes on mobile
     });
 
-    setSelection(-1);
+    build();
 
     // test-only handle (off in production unless explicitly enabled)
     if (window.__KMAP_TEST__) {
-      kmapEl._kmap = { camera, controls, renderer, pucks: relGroups.map((g) => g.puck), open: openDetail, close: closeDetail };
+      kmapEl._kmap = { camera, controls, renderer, get pucks() { return relGroups.map((g) => g.puck); }, get records() { return recordNodes; }, open: openDetail, close: closeDetail };
     }
   }
 
