@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Semantic OS × Knowledge Map AI — From records to action</title>
+  <title>Semantic OS — Turn scattered records into structured memory</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -24,175 +24,147 @@
     <div class="brand">
       <span class="brand__mark" aria-hidden="true"></span>
       <span class="brand__name">Semantic<span class="brand__os">OS</span></span>
-      <span class="brand__x">×</span>
-      <span class="brand__map">Knowledge&nbsp;Map&nbsp;AI</span>
     </div>
-    <nav class="stepper" data-stepper aria-label="Journey progress">
-      <!-- steps injected -->
-    </nav>
+    <nav class="stepper" data-stepper aria-label="Progress"></nav>
+    <button class="replaybtn" data-replay-demo type="button" title="Replay the full demo">
+      <span aria-hidden="true">↺</span> Replay Demo
+    </button>
   </header>
 
   <!-- ============ JOURNEY STAGE ============ -->
   <main class="stage">
-    <!-- Left sidebar (appears from Scene 2) -->
-    <aside class="sidebar" data-sidebar aria-hidden="true">
-      <div class="panel">
-        <div class="panel__title">Information Sources</div>
-        <ul class="srclist" data-sb-sources></ul>
+    <div class="headline">
+      <span class="eyebrow" data-eyebrow></span>
+      <h1 class="stitle" data-title></h1>
+      <p class="ssub" data-sub></p>
+      <p class="smsg" data-msg></p>
+    </div>
 
-        <div class="panel__title panel__title--mt" data-sb-filters-title hidden>
-          Entity Filters
-        </div>
-        <div class="filters" data-sb-filters hidden></div>
-
-        <div class="panel__note">
-          Semantic OS saves content, <strong>relationships</strong>, context,
-          <strong>causality</strong> and action feedback.
-        </div>
-      </div>
-    </aside>
-
-    <!-- Central stage area -->
-    <section class="stagearea">
-      <div class="headline">
-        <span class="eyebrow" data-eyebrow></span>
-        <h1 class="stitle" data-title></h1>
-        <p class="ssub" data-sub></p>
-        <p class="smsg" data-msg></p>
+    <div class="viewport" data-viewport>
+      <!-- Step 1: scattered files -->
+      <div class="widget" data-w="scatter">
+        <div class="field" data-field></div>
       </div>
 
-      <div class="viewport" data-viewport>
-        <!-- Scenes 1–2: document cards -->
-        <div class="widget" data-w="cardfield">
-          <div class="field" data-field></div>
-          <div class="groups" data-groups aria-hidden="true"></div>
-        </div>
+      <!-- Step 2: structured information sources (CSS Grid) -->
+      <div class="widget" data-w="sources">
+        <div class="sources-grid" data-sources></div>
+      </div>
 
-        <!-- Scene 3: relationship discovery -->
-        <div class="widget" data-w="relations">
-          <svg class="rel-edges" data-rel-edges preserveAspectRatio="none" aria-hidden="true"></svg>
-          <div class="rel-nodes" data-rel-nodes></div>
-          <div class="rel-status" data-rel-status></div>
-        </div>
+      <!-- Step 3: relationship discovery -->
+      <div class="widget" data-w="relations">
+        <svg class="rel-edges" data-rel-edges preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div class="rel-nodes" data-rel-nodes></div>
+        <div class="rel-status" data-rel-status></div>
+      </div>
 
-        <!-- Scenes 4–5: Knowledge Map AI graph -->
-        <div class="widget" data-w="graph">
-          <div class="canvas__toolbar">
-            <div class="toggle" role="tablist" aria-label="View mode">
-              <button class="toggle__pill is-active" data-view="2d" role="tab" type="button">2D Map</button>
-              <button class="toggle__pill" data-view="3d" role="tab" type="button">3D Space</button>
+      <!-- Step 4: hidden opportunity -->
+      <div class="widget" data-w="opportunity">
+        <article class="oppcard" data-oppcard>
+          <header class="oppcard__head">
+            <div class="oppcard__avatar">MC</div>
+            <div class="oppcard__id">
+              <span class="oppcard__name">Marie Chen</span>
+              <span class="oppcard__role">Visitor · Paris Business Expo</span>
             </div>
-          </div>
-          <svg class="edges" data-edges preserveAspectRatio="none" aria-hidden="true"></svg>
-          <div class="nodes" data-nodes></div>
-          <div class="minimap" aria-hidden="true">
-            <span class="minimap__label">Mini Map</span>
-            <div class="minimap__dots" data-minimap></div>
-          </div>
-
-          <!-- Scene 5 overlay: hidden opportunity -->
-          <aside class="opppanel" data-opp hidden>
-            <div class="opppanel__head">
-              <span class="opppanel__tag">Hidden opportunity detected</span>
-              <span class="opppanel__subject">Visitor · Marie Chen</span>
-            </div>
-            <ul class="opppanel__checks" data-opp-checks></ul>
-            <div class="opppanel__scores">
-              <div class="score">
-                <div class="score__ring" data-ring="confidence">
-                  <span data-num="confidence">0</span><i>%</i>
-                </div>
-                <span class="score__label">Confidence</span>
+            <span class="oppcard__tag">Hidden opportunity</span>
+          </header>
+          <div class="oppcard__body">
+            <ul class="footprint" data-footprint></ul>
+            <div class="oppscore">
+              <div class="oppscore__ring" data-ring="opp">
+                <span data-num="opp">0</span><i>%</i>
               </div>
-              <div class="score">
-                <div class="score__ring score__ring--opp" data-ring="opp">
-                  <span data-num="opp">0</span><i>%</i>
-                </div>
-                <span class="score__label">Opportunity</span>
+              <span class="oppscore__label">Opportunity score</span>
+              <div class="oppscore__rev">
+                Est. revenue potential
+                <strong>€<span data-num="rev">0</span></strong>
               </div>
             </div>
-            <div class="opppanel__rev">
-              Est. revenue potential
-              <strong>€<span data-num="rev">0</span></strong>
-            </div>
-          </aside>
-        </div>
-
-        <!-- Scene 6: action panel -->
-        <div class="widget" data-w="action">
-          <article class="actioncard" data-actioncard>
-            <span class="actioncard__tag">Recommended action</span>
-            <h3 class="actioncard__title">Contact Marie Chen within 48 hours</h3>
-            <ul class="actioncard__steps">
-              <li><span>1</span> Send pricing proposal</li>
-              <li><span>2</span> Schedule follow-up call</li>
-              <li><span>3</span> Log outcome to Semantic OS</li>
-            </ul>
-            <div class="actioncard__metrics">
-              <div><strong data-num="conv">0</strong><i>%</i><span>Conversion probability</span></div>
-              <div><strong>€<span data-num="arev">0</span></strong><span>Expected revenue</span></div>
-            </div>
-          </article>
-        </div>
+          </div>
+        </article>
       </div>
 
-      <!-- CTA row -->
-      <div class="cta-row">
-        <button class="btn btn--ghost cta-back" data-back type="button" hidden>← Back</button>
-        <button class="btn btn--primary" data-cta-primary type="button"></button>
-        <button class="btn btn--ghost" data-cta-secondary type="button" hidden></button>
+      <!-- Step 5: action -->
+      <div class="widget" data-w="action">
+        <article class="actioncard" data-actioncard>
+          <span class="actioncard__tag">Recommended action</span>
+          <h3 class="actioncard__title">Contact Marie Chen within 48 hours</h3>
+          <ul class="actioncard__steps">
+            <li><span>1</span> Send pricing proposal</li>
+            <li><span>2</span> Schedule follow-up call</li>
+            <li><span>3</span> Log the outcome back to Semantic OS</li>
+          </ul>
+          <div class="actioncard__metrics">
+            <div><strong data-num="conv">0</strong><i>%</i><span>Conversion probability</span></div>
+            <div><strong>€<span data-num="arev">0</span></strong><span>Expected revenue</span></div>
+          </div>
+        </article>
       </div>
-    </section>
+    </div>
+
+    <!-- CTA row -->
+    <div class="cta-row">
+      <button class="btn btn--ghost cta-back" data-back type="button" hidden>← Back</button>
+      <button class="btn btn--primary" data-cta-primary type="button"></button>
+    </div>
   </main>
 
-  <!-- ============ FINAL COMPARISON ============ -->
-  <section class="compare" id="compare">
-    <div class="section__head">
-      <span class="eyebrow">The difference</span>
-      <h2 class="section__title">A knowledge base remembers files. Semantic OS remembers meaning.</h2>
-    </div>
-    <div class="compare__grid">
-      <article class="comparecard comparecard--old">
-        <div class="comparecard__head">
-          <span class="comparecard__ico" aria-hidden="true">🗄️</span>
-          <h3>Traditional Knowledge Base</h3>
-        </div>
-        <ul class="comparelist comparelist--old">
-          <li>Stores documents</li>
-          <li>Stores notes</li>
-          <li>Requires manual search</li>
-        </ul>
-      </article>
-      <article class="comparecard comparecard--new">
-        <div class="comparecard__head">
-          <span class="comparecard__ico comparecard__ico--new" aria-hidden="true">🧠</span>
-          <h3>Semantic OS + Knowledge Map AI</h3>
-        </div>
-        <ul class="comparelist comparelist--new">
-          <li>Stores content</li>
-          <li>Stores relationships</li>
-          <li>Stores context</li>
-          <li>Stores causality</li>
-          <li>Stores action feedback</li>
-          <li>Visualizes everything in 2D and 3D</li>
-          <li>Generates next actions</li>
-        </ul>
-      </article>
-    </div>
-
-    <div class="finale">
-      <p class="finale__lead">Your second brain should not just store notes. It should reveal relationships.</p>
-      <p class="finale__line"><strong>Semantic OS</strong> remembers. <strong>Knowledge Map AI</strong> makes it visible.</p>
-      <div class="finale__actions">
-        <a class="btn btn--primary" href="#contact">Build Your Semantic OS</a>
-        <a class="btn btn--ghost" href="https://map.clawshow.ai" target="_blank" rel="noopener noreferrer">Explore Knowledge Map AI ↗</a>
+  <!-- ============ FINAL CTA — Knowledge Map AI ============ -->
+  <section class="finalcta" id="explore">
+    <div class="finalcta__inner">
+      <span class="finalcta__badge">Visualization layer</span>
+      <h2 class="finalcta__title">Want to See Your Relationships?</h2>
+      <p class="finalcta__text">
+        Semantic OS stores content, relationships, context, causality and action feedback.
+        Explore them visually in 2D and 3D.
+      </p>
+      <div class="finalcta__preview" aria-hidden="true">
+        <span class="dotnode dotnode--a"></span>
+        <span class="dotnode dotnode--b"></span>
+        <span class="dotnode dotnode--c"></span>
+        <span class="dotnode dotnode--d"></span>
+        <span class="dotnode dotnode--e"></span>
+        <svg class="finalcta__lines" viewBox="0 0 400 140" preserveAspectRatio="none">
+          <path d="M60,70 C120,30 160,30 210,70" />
+          <path d="M210,70 C260,110 300,110 340,70" />
+          <path d="M60,70 C140,120 240,120 340,70" />
+        </svg>
+      </div>
+      <div class="finalcta__actions">
+        <a class="btn btn--primary" href="https://map.clawshow.ai" target="_blank" rel="noopener noreferrer">
+          Explore Relationships in 2D/3D ↗
+        </a>
+        <button class="btn btn--ghost" data-open-modal type="button">Build Your Semantic OS</button>
       </div>
     </div>
   </section>
 
   <footer class="footer" id="contact">
-    <span>Semantic OS — the memory layer · Knowledge Map AI — the visualization layer</span>
+    <span>Semantic OS — turn scattered records into structured, actionable memory.</span>
   </footer>
+
+  <!-- ============ MODAL: Build Your Semantic OS ============ -->
+  <div class="modal" data-modal hidden>
+    <div class="modal__overlay" data-modal-close></div>
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal__x" data-modal-close type="button" aria-label="Close">×</button>
+      <h2 class="modal__title" id="modalTitle">Build Your Semantic OS</h2>
+      <p class="modal__text">Semantic OS is currently available through guided setup.</p>
+      <p class="modal__text">
+        We help founders, consultants, educators and teams build their own Semantic OS.
+      </p>
+      <p class="modal__text modal__text--dim">To request a demo or discuss a project:</p>
+      <div class="modal__email">
+        <span data-modal-email>jason.lu@futushow.com</span>
+      </div>
+      <div class="modal__actions">
+        <button class="btn btn--primary" data-copy-email type="button">Copy Email</button>
+        <button class="btn btn--ghost" data-modal-close type="button">Close</button>
+      </div>
+      <span class="modal__toast" data-copy-toast aria-live="polite" hidden>✓ Email copied</span>
+    </div>
+  </div>
 
   <!-- GSAP CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>

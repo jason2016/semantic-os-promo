@@ -1,47 +1,44 @@
-# Semantic OS × Knowledge Map AI — Promo MVP v2
+# Semantic OS — Promo MVP v3
 
-An interactive promo that tells one story: **how scattered trade-show records
-become an actionable intelligence map.**
+An interactive promo for **Semantic OS** — the product that turns scattered
+trade-show records into structured, actionable memory.
 
 > Your second brain should not just store notes. It should reveal relationships.
-> **Semantic OS remembers. Knowledge Map AI makes it visible.**
+
+**Semantic OS is the product.** Knowledge Map AI is *only its visualization layer*
+and appears once, at the final call-to-action. The homepage focuses entirely on
+Semantic OS.
 
 Styled after [map.clawshow.ai](https://map.clawshow.ai): a calm, light, enterprise
-SaaS interface with soft blue / purple accents, a subtle grid + floating dots, and
-a "second brain" feeling. Built with plain **HTML + CSS + JavaScript + GSAP** —
-no React, no framework, no backend, no build step.
+SaaS interface with soft blue / purple accents and a subtle grid + floating dots.
+Built with plain **HTML + CSS + JavaScript + GSAP** — no React, no framework, no
+backend, no build step.
 
-## Product positioning
+## The story — 5 steps
 
-- **Semantic OS is the memory layer.** It stores **content, relationships,
-  context, causality** and **action feedback** — not a dead knowledge base.
-- **Knowledge Map AI is the visualization layer.** It reveals those relationships
-  in **2D and 3D**.
-- **Together**, they turn scattered work into an actionable intelligence map and
-  generate the next action.
+A new visitor should understand the value in ~30 seconds:
 
-## The journey (6 scenes)
+| # | Step | Message |
+|---|------|---------|
+| 1 | **Too Much Information** | Trade shows generate emails, lists, notes and conversations — scattered files drift on screen. |
+| 2 | **Semantic OS Organizes Information** | Files snap into a clean **CSS-Grid** of 6 information sources (Exhibitor Files, Visitor Lists, Campaign Notes, Partner Emails, Booth Plans, Follow-up Notes), each listing its documents. *No overlap, no floating cards.* |
+| 3 | **Relationships Matter More Than Documents** | *Marie Chen* is detected across a visitor list, email, pricing request and meeting notes; lines connect them — *same person → relationship created*. |
+| 4 | **Hidden Opportunities Become Visible** | Marie's footprint resolves into one signal: **Opportunity Score 87%**, **€12,000** revenue potential. |
+| 5 | **Turn Knowledge Into Action** | A recommended-action card: contact within 48h, send pricing, schedule a call — **63% conversion**, **€12,000** expected revenue. |
 
-A trade-show case study, advanced via the buttons (or the top stepper):
+**Final CTA** — *"Want to See Your Relationships? Semantic OS stores content,
+relationships, context, causality and action feedback. Explore them visually in 2D
+and 3D."*
 
-| # | Scene | What happens |
-|---|-------|--------------|
-| 1 | **Trade show chaos** | Floating documents (Visitor List, Partner Email, Booth Plan, Campaign Notes, Follow-up Notes, WhatsApp, Business Cards, Pricing Request…) drift, scattered. |
-| 2 | **Semantic OS** | Files fly into 6 source groups: Exhibitor Files · Visitor Lists · Campaign Notes · Partner Emails · Booth Plans · Follow-up Notes. A left sidebar appears. |
-| 3 | **Relationships** | *Marie Chen* is detected across three records; lines connect them — *same person → context linked → relationship created*. |
-| 4 | **Knowledge Map AI** | The relationship graph: round colored nodes, curved edges, **2D Map / 3D Space** toggle, left panel with **Information Sources** + **Entity Filters**, mini-map. Nodes appear sequentially, edges draw in. |
-| 5 | **Hidden opportunity** | Marie Chen's sub-graph lights up; an opportunity panel shows her footprint, a **confidence** ring, **Opportunity Score 87%**, and **€12,000** revenue potential. |
-| 6 | **Action** | A glowing action card: contact within 48h, send pricing, schedule follow-up — **63% conversion**, **€12,000** expected revenue. |
-
-A final **comparison section** contrasts a Traditional Knowledge Base with
-Semantic OS + Knowledge Map AI, and closes with the two CTAs.
+- Primary: **Explore Relationships in 2D/3D** → <https://map.clawshow.ai> (opens in a new tab)
+- Secondary: **Build Your Semantic OS** → opens a contact modal (see below)
 
 ## Project structure
 
 ```
-index.html    Markup: stepper, sidebar, scene widgets, comparison
-styles.css    Light SaaS theme, responsive
-app.js        Scene controller + all GSAP animations + graph engine
+index.html    Markup: stepper, 5 step widgets, final CTA
+styles.css    Light SaaS theme, responsive, CSS-Grid source layout
+app.js        Scene controller + GSAP animations
 README.md     This file
 ```
 
@@ -69,24 +66,26 @@ All asset paths are **relative** (`styles.css`, `app.js`) and `index.html` lives
 the repository root, so the site works as a GitHub Pages **project site** with no
 build step.
 
-1. Push this repo to GitHub (see below).
-2. On GitHub: **Settings → Pages**.
-3. Under **Build and deployment**, set **Source = Deploy from a branch**.
-4. Choose **Branch: `main`** and **Folder: `/ (root)`**, then **Save**.
-5. After a minute, your site is live at:
+1. Push this repo to GitHub.
+2. **Settings → Pages**.
+3. **Build and deployment → Source = Deploy from a branch**.
+4. **Branch: `main`**, **Folder: `/ (root)`**, then **Save**.
+5. The site goes live at `https://<your-username>.github.io/<repo-name>/`.
 
-   ```
-   https://<your-username>.github.io/<repo-name>/
-   ```
-
-No `.nojekyll` file is needed (there are no underscore-prefixed paths). To use a
-custom domain later, add a `CNAME` file at the root.
+No `.nojekyll` is needed (no underscore-prefixed paths). For a custom domain, add a
+`CNAME` file at the root.
 
 ## Notes
 
-- The CTAs link out: **Build Your Semantic OS** → `#contact` (placeholder anchor),
-  **Explore Knowledge Map AI** → <https://map.clawshow.ai> (opens in a new tab).
-- Everything is responsive; the sidebar stacks under the stage on small screens.
-- `prefers-reduced-motion` disables idle floating and the action-card glow.
-- Uses CSS `color-mix()` for soft node halos (supported by current Chrome / Edge /
+- Navigate with the primary button, the top **stepper**, or **Back**.
+- **Replay Demo** (top-right) restarts the whole 5-step journey — resetting state,
+  progress and animations and scrolling back to the top — without a page refresh.
+- **Build Your Semantic OS** opens a modal with the contact email
+  (`jason.lu@futushow.com`) and a **Copy Email** button (with an "Email copied"
+  confirmation). No backend or contact form — pure HTML/CSS/JS.
+- Step 2's source layout uses **CSS Grid** with no absolute positioning — clean and
+  non-overlapping by construction.
+- Everything is responsive; `prefers-reduced-motion` disables idle floating and the
+  action-card glow.
+- Uses CSS `color-mix()` for soft tints (supported by current Chrome / Edge /
   Firefox / Safari).
