@@ -51,38 +51,34 @@
         <div class="sources-grid" data-sources></div>
       </div>
 
-      <!-- Step 3: relationship discovery -->
+      <!-- Step 3: relationship records (the stored object) -->
       <div class="widget" data-w="relations">
-        <svg class="rel-edges" data-rel-edges preserveAspectRatio="none" aria-hidden="true"></svg>
-        <div class="rel-nodes" data-rel-nodes></div>
-        <div class="rel-status" data-rel-status></div>
+        <div class="relrecs" data-relrecs></div>
       </div>
 
-      <!-- Step 4: hidden opportunity -->
-      <div class="widget" data-w="opportunity">
-        <article class="oppcard" data-oppcard>
-          <header class="oppcard__head">
-            <div class="oppcard__avatar">MC</div>
-            <div class="oppcard__id">
-              <span class="oppcard__name">Marie Chen</span>
-              <span class="oppcard__role">Visitor · Paris Business Expo</span>
-            </div>
-            <span class="oppcard__tag">Hidden opportunity</span>
-          </header>
-          <div class="oppcard__body">
-            <ul class="footprint" data-footprint></ul>
-            <div class="oppscore">
-              <div class="oppscore__ring" data-ring="opp">
-                <span data-num="opp">0</span><i>%</i>
-              </div>
-              <span class="oppscore__label">Opportunity score</span>
-              <div class="oppscore__rev">
-                Est. revenue potential
-                <strong>€<span data-num="rev">0</span></strong>
-              </div>
+      <!-- Step 4: context + causality -->
+      <div class="widget" data-w="context">
+        <div class="ctx">
+          <div class="ctx__evidence">
+            <span class="ctx__elabel">Evidence sources</span>
+            <div class="ctx__chips">
+              <span class="evchip">Visited Booth B12</span>
+              <span class="evchip">Requested Pricing</span>
+              <span class="evchip">Mentioned Budget</span>
+              <span class="evchip evchip--alert">No Follow-up Sent</span>
             </div>
           </div>
-        </article>
+          <div class="ctx__arrow">↓</div>
+          <div class="ctxcard ctxcard--context">
+            <span class="ctxcard__tag">Context discovered</span>
+            <span class="ctxcard__value">High Purchase Intent</span>
+          </div>
+          <div class="ctx__arrow">↓</div>
+          <div class="ctxcard ctxcard--causality">
+            <span class="ctxcard__tag">Causality discovered</span>
+            <span class="ctxcard__value">Pricing request received — but no response sent</span>
+          </div>
+        </div>
       </div>
 
       <!-- Step 5: action -->
@@ -90,14 +86,17 @@
         <article class="actioncard" data-actioncard>
           <span class="actioncard__tag">Recommended action</span>
           <h3 class="actioncard__title">Contact Marie Chen within 48 hours</h3>
-          <ul class="actioncard__steps">
-            <li><span>1</span> Send pricing proposal</li>
-            <li><span>2</span> Schedule follow-up call</li>
-            <li><span>3</span> Log the outcome back to Semantic OS</li>
-          </ul>
+          <div class="actioncard__reason">
+            <span class="actioncard__reasonlabel">Why</span>
+            <ul>
+              <li>Pricing request received</li>
+              <li>Budget discussed</li>
+              <li>No follow-up found</li>
+            </ul>
+          </div>
           <div class="actioncard__metrics">
-            <div><strong data-num="conv">0</strong><i>%</i><span>Conversion probability</span></div>
             <div><strong>€<span data-num="arev">0</span></strong><span>Expected revenue</span></div>
+            <div><strong data-num="conv">0</strong><i>%</i><span>Probability</span></div>
           </div>
         </article>
       </div>
@@ -114,23 +113,46 @@
   <section class="finalcta" id="explore">
     <div class="finalcta__inner">
       <span class="finalcta__badge">Visualization layer</span>
-      <h2 class="finalcta__title">Want to See Your Relationships?</h2>
+      <h2 class="finalcta__title">Explore Relationships in 2D/3D</h2>
       <p class="finalcta__text">
-        Semantic OS stores content, relationships, context, causality and action feedback.
-        Explore them visually in 2D and 3D.
+        Knowledge Map AI is the visualization layer of Semantic OS.
+        Explore stored relationships, context, causality and actions in 2D and 3D.
       </p>
-      <div class="finalcta__preview" aria-hidden="true">
-        <span class="dotnode dotnode--a"></span>
-        <span class="dotnode dotnode--b"></span>
-        <span class="dotnode dotnode--c"></span>
-        <span class="dotnode dotnode--d"></span>
-        <span class="dotnode dotnode--e"></span>
-        <svg class="finalcta__lines" viewBox="0 0 400 140" preserveAspectRatio="none">
-          <path d="M60,70 C120,30 160,30 210,70" />
-          <path d="M210,70 C260,110 300,110 340,70" />
-          <path d="M60,70 C140,120 240,120 340,70" />
-        </svg>
+      <!-- Interactive 3D relationship space (miniature Knowledge Map AI) -->
+      <div class="kmap" data-kmap>
+        <div class="kmap__canvas" data-kmap-canvas></div>
+
+        <div class="kmap__layers" aria-hidden="true">
+          <span class="kmap__layer" style="--lc:#8b5cf6">Records</span>
+          <span class="kmap__arrow">↓</span>
+          <span class="kmap__layer kmap__layer--hero" style="--lc:#5b6cff">Relationships</span>
+          <span class="kmap__arrow">↓</span>
+          <span class="kmap__layer" style="--lc:#0ea5e9">Context</span>
+          <span class="kmap__arrow">↓</span>
+          <span class="kmap__layer" style="--lc:#14b8a6">Actions</span>
+        </div>
+
+        <div class="kmap__hint" data-kmap-hint>Drag to rotate · Scroll to zoom · Click a relationship</div>
+
+        <aside class="kmap__detail" data-kmap-detail hidden>
+          <button class="kmap__dclose" data-kmap-detail-close type="button" aria-label="Close">×</button>
+          <span class="kmap__dtag">Relationship · stored object</span>
+          <h4 class="kmap__dlabel" data-d-label></h4>
+          <dl class="kmap__dl">
+            <dt>Meaning</dt><dd data-d-meaning></dd>
+            <dt>Evidence</dt><dd data-d-evidence></dd>
+            <dt>Confidence</dt><dd><span class="kmap__conf" data-d-confidence></span></dd>
+          </dl>
+          <div class="kmap__dflags">
+            <span class="kmap__flag">Saved</span>
+            <span class="kmap__flag">Searchable</span>
+            <span class="kmap__flag">Reusable</span>
+          </div>
+        </aside>
+
+        <noscript class="kmap__fallback">Enable JavaScript to explore the 3D relationship space.</noscript>
       </div>
+
       <div class="finalcta__actions">
         <a class="btn btn--primary" href="https://map.clawshow.ai" target="_blank" rel="noopener noreferrer">
           Explore Relationships in 2D/3D ↗
@@ -166,8 +188,10 @@
     </div>
   </div>
 
-  <!-- GSAP CDN -->
+  <!-- GSAP + Three.js (CDN) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

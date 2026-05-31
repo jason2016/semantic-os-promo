@@ -10,99 +10,111 @@
   "use strict";
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const MOBILE_Q = window.matchMedia("(max-width: 560px)");
+  const isMobile = () => MOBILE_Q.matches;
 
   /* ============================================================
      DATA
      ============================================================ */
 
-  // Scattered trade-show files (Step 1)
+  // Scattered information (Step 1)
   const FILES = [
     { name: "Visitor List.xlsx", ico: "📊", color: "#8b5cf6" },
     { name: "Partner Email.msg", ico: "✉️", color: "#34d399" },
-    { name: "Booth Plan.pdf", ico: "📐", color: "#fb7185" },
+    { name: "Pricing Request.pdf", ico: "💶", color: "#0ea5e9" },
+    { name: "Meeting Notes.md", ico: "🗒️", color: "#fb7185" },
+    { name: "WhatsApp Conversation", ico: "💬", color: "#34d399" },
     { name: "Campaign Notes.md", ico: "📝", color: "#a855f7" },
-    { name: "Follow-up Notes.docx", ico: "📄", color: "#0ea5e9" },
-    { name: "WhatsApp Messages", ico: "💬", color: "#34d399" },
-    { name: "Business Cards", ico: "🪪", color: "#6366f1" },
-    { name: "Meeting Notes", ico: "🗒️", color: "#0ea5e9" },
-    { name: "Pricing Request", ico: "💶", color: "#0ea5e9" },
-    { name: "Badge Scans.csv", ico: "📋", color: "#8b5cf6" }
+    { name: "Badge Scans.csv", ico: "📋", color: "#8b5cf6" },
+    { name: "Follow-up Notes.docx", ico: "🗂️", color: "#0ea5e9" },
+    { name: "Booth Plan.pdf", ico: "📐", color: "#fb7185" },
+    { name: "BizMedia Thread", ico: "✉️", color: "#34d399" }
   ];
 
   // Structured information sources (Step 2) — CSS Grid, each with a clean doc list
   const SOURCES = [
-    { name: "Exhibitor Files", ico: "📁", color: "#6366f1", docs: ["Exhibitor Pack.pdf", "Business Cards", "Stand Contract.pdf"] },
-    { name: "Visitor Lists", ico: "📋", color: "#8b5cf6", docs: ["Visitor List.xlsx", "Visitor Spreadsheet", "Badge Scans.csv"] },
-    { name: "Campaign Notes", ico: "📣", color: "#a855f7", docs: ["Campaign Notes.md", "Spring 2026 Brief", "Ad Copy.md"] },
-    { name: "Partner Emails", ico: "✉️", color: "#34d399", docs: ["Partner Email.msg", "BizMedia Thread", "WhatsApp Messages"] },
-    { name: "Booth Plans", ico: "🏗️", color: "#fb7185", docs: ["Booth Plan.pdf", "Floor Map.pdf", "Setup Checklist"] },
-    { name: "Follow-up Notes", ico: "🗂️", color: "#0ea5e9", docs: ["Follow-up Notes.docx", "Meeting Notes", "Pricing Request"] }
+    { name: "Visitor Lists", ico: "📋", color: "#8b5cf6", docs: ["Visitor List.xlsx", "Badge Scans.csv"] },
+    { name: "Partner Emails", ico: "✉️", color: "#34d399", docs: ["Partner Email.msg", "BizMedia Thread", "WhatsApp Conversation"] },
+    { name: "Meeting Notes", ico: "🗒️", color: "#fb7185", docs: ["Meeting Notes.md", "Booth Recap"] },
+    { name: "Pricing Requests", ico: "💶", color: "#0ea5e9", docs: ["Pricing Request.pdf", "Quote Draft"] },
+    { name: "Campaign Notes", ico: "📣", color: "#a855f7", docs: ["Campaign Notes.md", "Spring 2026 Brief"] },
+    { name: "Follow-up Notes", ico: "🗂️", color: "#6366f1", docs: ["Follow-up Notes.docx", "Open Items"] }
   ];
 
-  // Records where Marie Chen appears (Step 3)
-  const REL_ITEMS = [
-    { name: "Visitor List", meta: "Row 42 · Marie Chen", ico: "📋", color: "#8b5cf6", x: 0.16, y: 0.32 },
-    { name: "Partner Email", meta: "From: Marie Chen", ico: "✉️", color: "#34d399", x: 0.84, y: 0.32 },
-    { name: "Pricing Request", meta: "Submitted by M. Chen", ico: "💶", color: "#0ea5e9", x: 0.16, y: 0.66 },
-    { name: "Meeting Notes", meta: "Re: Marie Chen", ico: "🗒️", color: "#fb7185", x: 0.84, y: 0.66 }
-  ];
-
-  const REL_CHIPS = ["Same person detected", "Relationship created"];
-
-  // Marie Chen's footprint (Step 4)
-  const FOOTPRINT = [
-    "Visited Booth B12",
-    "Opened Campaign Email",
-    "Requested Pricing",
-    "Budget Mentioned",
-    "Follow-up Pending"
+  // Step 3 — the HERO: stored relationship records.
+  // Each relationship is the object: a labeled link between two sources, with metadata.
+  const REL_RECORDS = [
+    {
+      label: "Same Visitor", confidence: 92,
+      a: { name: "Visitor List", ico: "📋", color: "#8b5cf6" },
+      b: { name: "Partner Email", ico: "✉️", color: "#34d399" },
+      meaning: "<b>Marie Chen</b> is the same visitor across both records."
+    },
+    {
+      label: "Interested In Product X", confidence: 88,
+      a: { name: "Meeting Notes", ico: "🗒️", color: "#fb7185" },
+      b: { name: "Campaign Notes", ico: "📣", color: "#a855f7" },
+      meaning: "Marie repeatedly references <b>Product X</b>."
+    },
+    {
+      label: "Mentioned Budget", confidence: 84,
+      a: { name: "Meeting Notes", ico: "🗒️", color: "#fb7185" },
+      b: { name: "Pricing Request", ico: "💶", color: "#0ea5e9" },
+      meaning: "A <b>budget range</b> was discussed and recorded."
+    },
+    {
+      label: "Waiting For Follow-up", confidence: 90,
+      a: { name: "Pricing Request", ico: "💶", color: "#0ea5e9" },
+      b: { name: "Follow-up Notes", ico: "🗂️", color: "#6366f1" },
+      meaning: "A pricing request has <b>no response</b> yet."
+    }
   ];
 
   /* ============================================================
      SCENES
      ============================================================ */
-  const STEPS = ["Chaos", "Organize", "Relationships", "Opportunity", "Action"];
+  const STEPS = ["Chaos", "Structure", "Relationships", "Context", "Action"];
 
   const SCENES = [
     {
-      eyebrow: "Step 1 · The problem",
-      title: "Too Much Information. Not Enough Understanding.",
-      sub: "Trade shows generate emails, visitor lists, notes, documents and conversations. Most teams lose track of the relationships.",
+      eyebrow: "Step 1 · Chaos",
+      title: "You Have Information Everywhere.",
+      sub: "Emails, notes, visitor lists, pricing requests, meeting notes and conversations are scattered across systems.",
       msg: "",
       widget: "scatter",
-      primary: { label: "Organize with Semantic OS →", go: 2 }
+      primary: { label: "Organize Information →", go: 2 }
     },
     {
-      eyebrow: "Step 2 · Semantic OS",
-      title: "Semantic OS Organizes Information.",
-      sub: "Files are grouped into structured memory.",
-      msg: "Semantic OS does not simply store files. It builds structured memory.",
+      eyebrow: "Step 2 · Structure",
+      title: "Semantic OS Creates Structured Memory.",
+      sub: "Information sources appear — every document finds its place.",
+      msg: "Documents are no longer isolated. They become part of a structured memory system.",
       widget: "sources",
       primary: { label: "Discover Relationships →", go: 3 }
     },
     {
       eyebrow: "Step 3 · Relationships",
-      title: "Relationships Matter More Than Documents.",
-      sub: "Marie Chen appears across a visitor list, an email, a pricing request and meeting notes.",
-      msg: "Traditional knowledge bases store documents. Semantic OS stores documents and relationships.",
+      title: "The Relationship Is the Stored Object.",
+      sub: "Semantic OS saves each relationship — labeled, scored and reusable — not just the documents.",
+      msg: "Semantic OS stores relationships, not just documents.",
       widget: "relations",
-      primary: { label: "Reveal Opportunity →", go: 4 }
+      primary: { label: "Reveal Context →", go: 4 }
     },
     {
-      eyebrow: "Step 4 · Opportunity",
-      title: "Hidden Opportunities Become Visible.",
-      sub: "Semantic OS connects Marie Chen's activity into one high-value signal.",
-      msg: "When relationships become visible, opportunities emerge.",
-      widget: "opportunity",
+      eyebrow: "Step 4 · Context + Causality",
+      title: "Relationships Become Context.",
+      sub: "Connected relationships accumulate into meaning — and reveal cause and effect.",
+      msg: "Semantic OS connects information into meaning.",
+      widget: "context",
       primary: { label: "Generate Action →", go: 5 }
     },
     {
       eyebrow: "Step 5 · Action",
-      title: "Turn Knowledge Into Action.",
-      sub: "Every record becomes a clear, recommended next step.",
-      msg: "Semantic OS turns memory into action.",
+      title: "Turn Relationships Into Action.",
+      sub: "Context becomes a clear, recommended next step — with expected revenue and probability.",
+      msg: "Relationships create context. Context creates action.",
       widget: "action",
-      primary: { label: "Explore the relationships ↓", scrollTo: "#explore" }
+      primary: { label: "Explore Relationships in 2D/3D ↓", scrollTo: "#explore" }
     }
   ];
 
@@ -123,10 +135,7 @@
 
   const field = $("[data-field]");
   const sourcesGrid = $("[data-sources]");
-  const relEdges = $("[data-rel-edges]");
-  const relNodes = $("[data-rel-nodes]");
-  const relStatus = $("[data-rel-status]");
-  const footprintEl = $("[data-footprint]");
+  const relrecsEl = $("[data-relrecs]");
 
   const ctaPrimary = $("[data-cta-primary]");
   const backBtn = $("[data-back]");
@@ -206,7 +215,7 @@
     if (s.widget === "scatter") enterScatter();
     else if (s.widget === "sources") enterSources();
     else if (s.widget === "relations") enterRelations();
-    else if (s.widget === "opportunity") enterOpportunity();
+    else if (s.widget === "context") enterContext();
     else if (s.widget === "action") enterAction();
   }
 
@@ -216,9 +225,10 @@
   let chipEls = [];
   let floatTweens = [];
 
-  function buildChips() {
+  function buildChips(count) {
     field.innerHTML = "";
-    chipEls = FILES.map((f) => {
+    const list = count ? FILES.slice(0, count) : FILES;
+    chipEls = list.map((f) => {
       const el = document.createElement("div");
       el.className = "filechip";
       el.style.setProperty("--chip-color", f.color);
@@ -233,11 +243,15 @@
   function killFloat() { floatTweens.forEach((t) => t.kill()); floatTweens = []; }
 
   function enterScatter() {
-    if (!chipEls.length) buildChips();
     killFloat();
+    // Fewer floating documents on mobile for clarity
+    buildChips(isMobile() ? 6 : FILES.length);
     const r = field.getBoundingClientRect();
-    const sx = Math.min(r.width * 0.4, 430);
-    const sy = Math.min(r.height * 0.4, 175);
+    // Clamp spread to chip size so nothing drifts off the field (no clipping)
+    const cw = chipEls[0] ? chipEls[0].offsetWidth : 170;
+    const chh = chipEls[0] ? chipEls[0].offsetHeight : 50;
+    const sx = Math.max(20, r.width / 2 - cw / 2 - 8);
+    const sy = Math.max(20, r.height / 2 - chh / 2 - 8);
     chipEls.forEach((el, i) => {
       const x = (Math.random() * 2 - 1) * sx;
       const y = (Math.random() * 2 - 1) * sy;
@@ -294,89 +308,71 @@
   }
 
   /* ============================================================
-     STEP 3 — relationship discovery
+     STEP 3 — relationship records (the stored object)
      ============================================================ */
+  function relWire(rec) {
+    return (
+      '<div class="relrec__wire">' +
+        '<span class="wirenode" style="--wire-color:' + rec.a.color + '">' +
+          '<span class="wirenode__ico">' + rec.a.ico + '</span>' +
+          '<span class="wirenode__name">' + rec.a.name + '</span>' +
+        '</span>' +
+        '<span class="wire"><span class="wire__label">' + rec.label + '</span></span>' +
+        '<span class="wirenode" style="--wire-color:' + rec.b.color + '">' +
+          '<span class="wirenode__ico">' + rec.b.ico + '</span>' +
+          '<span class="wirenode__name">' + rec.b.name + '</span>' +
+        '</span>' +
+      '</div>'
+    );
+  }
+
   function enterRelations() {
-    relNodes.innerHTML = "";
-    relStatus.innerHTML = "";
-    relEdges.innerHTML =
-      '<defs><linearGradient id="relGrad" x1="0" y1="0" x2="1" y2="1">' +
-      '<stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#5b6cff"/>' +
-      "</linearGradient></defs>";
-
-    const rect = widgets.relations.getBoundingClientRect();
-    const w = rect.width, h = rect.height;
-    const px = w * 0.5, py = h * 0.49;
-
-    const person = document.createElement("div");
-    person.className = "rel-person";
-    person.innerHTML =
-      '<div class="rel-person__avatar">MC</div>' +
-      '<div class="rel-person__name">Marie Chen</div>' +
-      '<div class="rel-person__role">One linked entity</div>';
-    relNodes.appendChild(person);
-    gsap.set(person, { left: px, top: py, xPercent: -50, yPercent: -50, scale: 0, opacity: 0 });
-
-    const items = REL_ITEMS.map((it) => {
-      const el = document.createElement("div");
-      el.className = "rel-item";
-      el.style.setProperty("--card-color", it.color);
+    relrecsEl.innerHTML = "";
+    const cards = REL_RECORDS.map((rec) => {
+      const el = document.createElement("article");
+      el.className = "relrec";
       el.innerHTML =
-        '<span class="rel-item__ico">' + it.ico + "</span>" +
-        '<span><span class="rel-item__name">' + it.name + "</span><br>" +
-        '<span class="rel-item__meta">' + it.meta + "</span></span>";
-      relNodes.appendChild(el);
-      const x = w * it.x, y = h * it.y;
-      gsap.set(el, { left: x, top: y, xPercent: -50, yPercent: -50, opacity: 0, scale: 0.7 });
-      return { el, x, y };
+        relWire(rec) +
+        '<p class="relrec__meaning">' + rec.meaning + "</p>" +
+        '<div class="relrec__meta">' +
+          '<span class="relrec__conf">Confidence ' + rec.confidence + "%</span>" +
+          '<span class="relrec__flag">Saved</span>' +
+          '<span class="relrec__flag">Searchable</span>' +
+          '<span class="relrec__flag">Reusable</span>' +
+        "</div>";
+      relrecsEl.appendChild(el);
+      return el;
     });
-
-    const paths = items.map((it) => {
-      const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      const midX = (it.x + px) / 2;
-      p.setAttribute("d", "M" + it.x + "," + it.y + " C" + midX + "," + it.y + " " + midX + "," + py + " " + px + "," + py);
-      p.style.opacity = "0";
-      relEdges.appendChild(p);
-      return p;
-    });
-
-    const chips = REL_CHIPS.map((txt) => {
-      const c = document.createElement("div");
-      c.className = "rel-chip";
-      c.textContent = txt;
-      relStatus.appendChild(c);
-      return c;
-    });
-
     const tl = gsap.timeline();
-    tl.to(items.map((i) => i.el), { opacity: 1, scale: 1, duration: 0.5, stagger: 0.1, ease: "back.out(1.5)" });
-    tl.to(person, { opacity: 1, scale: 1, duration: 0.55, ease: "back.out(1.6)" }, "-=0.2");
-    paths.forEach((p) => {
-      const len = p.getTotalLength ? p.getTotalLength() : 320;
-      gsap.set(p, { strokeDasharray: len, strokeDashoffset: len, opacity: 1 });
-      tl.to(p, { strokeDashoffset: 0, duration: 0.65, ease: "power2.inOut" }, "-=0.32");
+    tl.fromTo(cards, { opacity: 0, y: 20, scale: 0.97 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.12, ease: "back.out(1.3)" });
+    // the relationship label "snaps" onto each connecting line
+    cards.forEach((card, i) => {
+      const lbl = card.querySelector(".wire__label");
+      tl.fromTo(lbl, { scale: 0.5, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(2)" }, 0.25 + i * 0.12);
     });
-    chips.forEach((c) => tl.to(c, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, "-=0.35"));
   }
 
   /* ============================================================
-     STEP 4 — opportunity
+     STEP 4 — context + causality
      ============================================================ */
-  function enterOpportunity() {
-    footprintEl.innerHTML = "";
-    const lis = FOOTPRINT.map((t) => {
-      const li = document.createElement("li");
-      li.textContent = t;
-      footprintEl.appendChild(li);
-      return li;
-    });
-    const card = $("[data-oppcard]");
-    gsap.fromTo(card, { opacity: 0, y: 18, scale: 0.96 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.3)" });
-    const tl = gsap.timeline({ delay: 0.25 });
-    lis.forEach((li) => tl.fromTo(li, { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.3 }, "+=0.07"));
-    animateNumber($('[data-num="opp"]'), 87, $('[data-ring="opp"]'));
-    animateNumber($('[data-num="rev"]'), 12000, null, true);
+  function enterContext() {
+    const wrap = widgets.context;
+    const chips = wrap.querySelectorAll(".evchip");
+    const arrows = wrap.querySelectorAll(".ctx__arrow");
+    const ctxCard = wrap.querySelector(".ctxcard--context");
+    const causeCard = wrap.querySelector(".ctxcard--causality");
+    const tl = gsap.timeline();
+    tl.fromTo(wrap.querySelector(".ctx__elabel"), { opacity: 0 }, { opacity: 1, duration: 0.3 });
+    tl.fromTo(chips, { opacity: 0, y: 10, scale: 0.9 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.35, stagger: 0.09, ease: "back.out(1.5)" }, "-=0.1");
+    tl.fromTo(arrows[0], { opacity: 0, y: -6 }, { opacity: 1, y: 0, duration: 0.3 }, "+=0.05");
+    tl.fromTo(ctxCard, { opacity: 0, y: 14, scale: 0.96 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.4)" });
+    tl.fromTo(arrows[1], { opacity: 0, y: -6 }, { opacity: 1, y: 0, duration: 0.3 }, "+=0.05");
+    tl.fromTo(causeCard, { opacity: 0, y: 14, scale: 0.96 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.4)" });
   }
 
   /* ============================================================
@@ -469,6 +465,262 @@
   }
 
   /* ============================================================
+     KNOWLEDGE MAP AI — interactive 3D relationship space (Three.js)
+     Layers: Records → Relationships → Context → Actions.
+     Relationships are the hero: first-class, clickable objects.
+     ============================================================ */
+  const KMAP_RECORDS = [
+    { name: "Visitor List" }, { name: "Partner Email" }, { name: "Meeting Notes" },
+    { name: "Pricing Request" }, { name: "Campaign Notes" }, { name: "Follow-up Notes" }
+  ];
+  const KMAP_RELS = [
+    { label: "Same Visitor", a: 0, b: 1, conf: 92, meaning: "Marie Chen is the same visitor across both records.", evidence: "Visitor List + Partner Email" },
+    { label: "Interested In Product X", a: 2, b: 4, conf: 88, meaning: "Marie repeatedly references Product X.", evidence: "Meeting Notes + Campaign Notes" },
+    { label: "Mentioned Budget", a: 2, b: 3, conf: 84, meaning: "A budget range was discussed and recorded.", evidence: "Meeting Notes + Pricing Request" },
+    { label: "Waiting For Follow-up", a: 3, b: 5, conf: 90, meaning: "A pricing request has no response yet.", evidence: "Pricing Request + Follow-up Notes" }
+  ];
+  const C_RECORD = "#8b5cf6", C_REL = "#5b6cff", C_CTX = "#0ea5e9", C_ACT = "#14b8a6";
+
+  function initKmap() {
+    const mount = $("[data-kmap-canvas]");
+    const kmapEl = $("[data-kmap]");
+    if (!mount) return;
+    if (typeof THREE === "undefined") {
+      mount.innerHTML = '<div class="kmap__fallback">3D view needs an internet connection to load.</div>';
+      return;
+    }
+
+    const W0 = kmapEl.clientWidth || 800, H0 = kmapEl.clientHeight || 440;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, W0 / H0, 0.1, 1000);
+    camera.position.set(0, 6, 64);
+
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    } catch (err) {
+      mount.innerHTML = '<div class="kmap__fallback">Your browser could not start the 3D view.</div>';
+      return;
+    }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(W0, H0);
+    mount.appendChild(renderer.domElement);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+    const dir = new THREE.DirectionalLight(0xffffff, 0.5);
+    dir.position.set(20, 40, 30);
+    scene.add(dir);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.rotateSpeed = 0.7;
+    controls.minDistance = 34;
+    controls.maxDistance = 108;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.8;
+    controls.target.set(0, 0, 0);
+
+    const hintEl = $("[data-kmap-hint]");
+    controls.addEventListener("start", () => {
+      controls.autoRotate = false;
+      if (hintEl) gsap.to(hintEl, { opacity: 0.35, duration: 0.4 });
+    });
+
+    // ----- helpers -----
+    function nodeMesh(radius, hex, emissive) {
+      const m = new THREE.Mesh(
+        new THREE.SphereGeometry(radius, 28, 28),
+        new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: emissive, roughness: 0.45, metalness: 0.0 })
+      );
+      return m;
+    }
+    function tube(p1, p2, hex, radius, opacity) {
+      const mid = p1.clone().lerp(p2, 0.5);
+      mid.x *= 1.16; mid.z *= 1.16; // gentle outward bow
+      const curve = new THREE.QuadraticBezierCurve3(p1, mid, p2);
+      const geo = new THREE.TubeGeometry(curve, 24, radius, 8, false);
+      const mat = new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: opacity });
+      return new THREE.Mesh(geo, mat);
+    }
+    function makeLabel(text, hex, opts) {
+      opts = opts || {};
+      const dpr = 2, font = 46, padX = 26, padY = 16;
+      const c = document.createElement("canvas");
+      const ctx = c.getContext("2d");
+      ctx.font = "700 " + font + "px Inter, sans-serif";
+      const tw = Math.ceil(ctx.measureText(text).width);
+      c.width = (tw + padX * 2) * dpr;
+      c.height = (font + padY * 2) * dpr;
+      ctx.scale(dpr, dpr);
+      ctx.font = "700 " + font + "px Inter, sans-serif";
+      ctx.textBaseline = "middle";
+      const w = tw + padX * 2, h = font + padY * 2, r = h / 2;
+      if (opts.pill) {
+        ctx.fillStyle = hex;
+        ctx.beginPath();
+        ctx.moveTo(r, 0); ctx.arcTo(w, 0, w, h, r); ctx.arcTo(w, h, 0, h, r);
+        ctx.arcTo(0, h, 0, 0, r); ctx.arcTo(0, 0, w, 0, r); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#ffffff";
+      } else {
+        ctx.fillStyle = hex;
+      }
+      ctx.fillText(text, padX, h / 2 + 1);
+      const tex = new THREE.CanvasTexture(c);
+      tex.minFilter = THREE.LinearFilter; tex.anisotropy = 4;
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+      const sH = opts.scale || 2.3, aspect = c.width / c.height;
+      sp.scale.set(sH * aspect, sH, 1);
+      sp.renderOrder = 20;
+      return sp;
+    }
+
+    // ----- layout (vertical layers) -----
+    const Y_REC = 14, Y_REL = 4, Y_CTX = -7, Y_ACT = -16, R_REC = 16;
+    const recPos = KMAP_RECORDS.map((_, i) => {
+      const a = (i / KMAP_RECORDS.length) * Math.PI * 2;
+      return new THREE.Vector3(Math.cos(a) * R_REC, Y_REC, Math.sin(a) * R_REC);
+    });
+    const ctxPos = new THREE.Vector3(0, Y_CTX, 0);
+    const actPos = new THREE.Vector3(0, Y_ACT, 0);
+
+    const pickables = [];   // objects that select a relationship
+    const relGroups = [];   // per-relationship { puck, tubes[] }
+
+    // record nodes
+    recPos.forEach((p, i) => {
+      const m = nodeMesh(1.35, C_RECORD, 0.25);
+      m.position.copy(p);
+      scene.add(m);
+      const lbl = makeLabel(KMAP_RECORDS[i].name, "#3a2d6b", { scale: 1.7 });
+      lbl.position.copy(p).y += 2.6;
+      scene.add(lbl);
+    });
+
+    // context + action nodes
+    const ctxMesh = nodeMesh(2.1, C_CTX, 0.4); ctxMesh.position.copy(ctxPos); scene.add(ctxMesh);
+    const ctxLbl = makeLabel("Context · High Purchase Intent", C_CTX, { pill: true, scale: 2.0 });
+    ctxLbl.position.copy(ctxPos).y -= 3.4; scene.add(ctxLbl);
+
+    const actMesh = nodeMesh(2.3, C_ACT, 0.45); actMesh.position.copy(actPos); scene.add(actMesh);
+    const actLbl = makeLabel("Action · Contact within 48h", C_ACT, { pill: true, scale: 2.0 });
+    actLbl.position.copy(actPos).y -= 3.6; scene.add(actLbl);
+
+    // context → action edge
+    scene.add(tube(ctxPos, actPos, C_CTX, 0.14, 0.5));
+
+    // relationships (the hero)
+    KMAP_RELS.forEach((rel, i) => {
+      const pa = recPos[rel.a], pb = recPos[rel.b];
+      const puckPos = pa.clone().add(pb).multiplyScalar(0.5);
+      puckPos.multiplyScalar(0.5); puckPos.y = Y_REL; // pull toward center, set layer
+      const puck = nodeMesh(2.5, C_REL, 0.55);
+      puck.position.copy(puckPos);
+      puck.userData.rel = i;
+      scene.add(puck);
+      pickables.push(puck);
+
+      const lbl = makeLabel(rel.label, C_REL, { pill: true, scale: 2.2 });
+      lbl.position.copy(puckPos).y += 3.4;
+      scene.add(lbl);
+
+      // edges: record→relationship (×2), relationship→context
+      const tubes = [];
+      const t1 = tube(pa, puckPos, C_REL, 0.16, 0.55); t1.userData.rel = i; scene.add(t1); tubes.push(t1); pickables.push(t1);
+      const t2 = tube(pb, puckPos, C_REL, 0.16, 0.55); t2.userData.rel = i; scene.add(t2); tubes.push(t2); pickables.push(t2);
+      const t3 = tube(puckPos, ctxPos, C_CTX, 0.14, 0.45); t3.userData.rel = i; scene.add(t3); tubes.push(t3);
+
+      relGroups.push({ puck, label: lbl, tubes });
+    });
+
+    // ----- selection / detail panel -----
+    const detail = $("[data-kmap-detail]");
+    let selected = -1;
+
+    function setSelection(idx) {
+      selected = idx;
+      relGroups.forEach((g, i) => {
+        const on = idx < 0 || i === idx;
+        gsap.to(g.puck.scale, { x: i === idx ? 1.35 : 1, y: i === idx ? 1.35 : 1, z: i === idx ? 1.35 : 1, duration: 0.3, ease: "back.out(2)" });
+        g.puck.material.emissiveIntensity = i === idx ? 0.8 : (idx < 0 ? 0.55 : 0.25);
+        g.label.material.opacity = on ? 1 : 0.25;
+        g.tubes.forEach((t) => { t.material.opacity = on ? (i === idx ? 0.9 : 0.45) : 0.12; });
+      });
+    }
+    function openDetail(idx) {
+      const rel = KMAP_RELS[idx];
+      $("[data-d-label]").textContent = rel.label;
+      $("[data-d-meaning]").textContent = rel.meaning;
+      $("[data-d-evidence]").textContent = rel.evidence;
+      $("[data-d-confidence]").textContent = rel.conf + "%";
+      detail.hidden = false;
+      gsap.fromTo(detail, { opacity: 0, x: 14 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" });
+      setSelection(idx);
+    }
+    function closeDetail() {
+      detail.hidden = true;
+      setSelection(-1);
+    }
+    const dClose = $("[data-kmap-detail-close]");
+    if (dClose) dClose.addEventListener("click", closeDetail);
+
+    // ----- raycast click (distinguish from drag) -----
+    const ray = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+    let down = null;
+    function pointerNDC(e) {
+      const r = renderer.domElement.getBoundingClientRect();
+      ndc.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+      ndc.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+    }
+    function pick() {
+      ray.setFromCamera(ndc, camera);
+      const hits = ray.intersectObjects(pickables, false);
+      return hits.length ? hits[0].object.userData.rel : -1;
+    }
+    renderer.domElement.addEventListener("pointerdown", (e) => { down = { x: e.clientX, y: e.clientY, t: Date.now() }; });
+    renderer.domElement.addEventListener("pointerup", (e) => {
+      if (!down) return;
+      const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+      const quick = Date.now() - down.t < 450;
+      down = null;
+      if (moved > 6 || !quick) return; // it was a drag, not a click
+      pointerNDC(e);
+      const idx = pick();
+      if (idx >= 0) openDetail(idx);
+      else closeDetail();
+    });
+    renderer.domElement.addEventListener("pointermove", (e) => {
+      pointerNDC(e);
+      renderer.domElement.style.cursor = pick() >= 0 ? "pointer" : "";
+    });
+
+    // ----- render loop (paused when offscreen) -----
+    let raf = null;
+    function loop() { controls.update(); renderer.render(scene, camera); raf = requestAnimationFrame(loop); }
+    function start() { if (!raf) loop(); }
+    function stop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver((ents) => { ents[0].isIntersecting ? start() : stop(); }, { threshold: 0.05 })
+        .observe(kmapEl);
+    } else { start(); }
+
+    window.addEventListener("resize", () => {
+      const w = kmapEl.clientWidth, h = kmapEl.clientHeight;
+      if (!w || !h) return;
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    });
+
+    setSelection(-1);
+
+    // test-only handle (off in production unless explicitly enabled)
+    if (window.__KMAP_TEST__) {
+      kmapEl._kmap = { camera, controls, renderer, pucks: relGroups.map((g) => g.puck), open: openDetail, close: closeDetail };
+    }
+  }
+
+  /* ============================================================
      INIT + RESIZE
      ============================================================ */
   function init() {
@@ -485,6 +737,7 @@
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !modal.hidden) closeModal(); });
 
     goTo(0);
+    initKmap();
 
     let raf;
     window.addEventListener("resize", () => {

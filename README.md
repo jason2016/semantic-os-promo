@@ -1,34 +1,40 @@
-# Semantic OS — Promo MVP v3
+# Semantic OS — Promo MVP (Relationship-First)
 
-An interactive promo for **Semantic OS** — the product that turns scattered
-trade-show records into structured, actionable memory.
+An interactive promo for **Semantic OS** — the memory layer that stores not just
+documents, but **relationships, context, causality and action feedback**.
 
-> Your second brain should not just store notes. It should reveal relationships.
+> Semantic OS does not store files. It stores relationships.
 
-**Semantic OS is the product.** Knowledge Map AI is *only its visualization layer*
-and appears once, at the final call-to-action. The homepage focuses entirely on
-Semantic OS.
+**The relationship is the hero.** Traditional knowledge bases store documents;
+knowledge graphs visualize nodes — Semantic OS stores the relationships themselves
+(saved, searchable, reusable and connected to future actions). Knowledge Map AI is
+*only its visualization layer* and appears once, at the final call-to-action.
 
 Styled after [map.clawshow.ai](https://map.clawshow.ai): a calm, light, enterprise
 SaaS interface with soft blue / purple accents and a subtle grid + floating dots.
-Built with plain **HTML + CSS + JavaScript + GSAP** — no React, no framework, no
-backend, no build step.
+Built with plain **HTML + CSS + JavaScript + GSAP**, plus **Three.js** (CDN) for the
+interactive 3D relationship space — no React, no framework, no backend, no build step.
 
 ## The story — 5 steps
 
-A new visitor should understand the value in ~30 seconds:
+A new visitor should leave understanding: Semantic OS stores **relationships**,
+relationships are **searchable**, they accumulate **context**, context reveals
+**causality**, and causality generates **action**.
 
-| # | Step | Message |
-|---|------|---------|
-| 1 | **Too Much Information** | Trade shows generate emails, lists, notes and conversations — scattered files drift on screen. |
-| 2 | **Semantic OS Organizes Information** | Files snap into a clean **CSS-Grid** of 6 information sources (Exhibitor Files, Visitor Lists, Campaign Notes, Partner Emails, Booth Plans, Follow-up Notes), each listing its documents. *No overlap, no floating cards.* |
-| 3 | **Relationships Matter More Than Documents** | *Marie Chen* is detected across a visitor list, email, pricing request and meeting notes; lines connect them — *same person → relationship created*. |
-| 4 | **Hidden Opportunities Become Visible** | Marie's footprint resolves into one signal: **Opportunity Score 87%**, **€12,000** revenue potential. |
-| 5 | **Turn Knowledge Into Action** | A recommended-action card: contact within 48h, send pricing, schedule a call — **63% conversion**, **€12,000** expected revenue. |
+| # | Step | What it shows |
+|---|------|---------------|
+| 1 | **Chaos** | Emails, notes, visitor lists, pricing requests, meeting notes and conversations drift as scattered files. |
+| 2 | **Structure** | Files become a clean **CSS-Grid** of information sources (Visitor Lists, Partner Emails, Meeting Notes, Pricing Requests, Campaign Notes, Follow-up Notes) — structured memory, no overlap. |
+| 3 | **Relationships** (the hero) | **Relationship records** — each a labeled link between two sources (e.g. *Same Visitor*, *Mentioned Budget*) with **Confidence %** and **Saved · Searchable · Reusable** flags. The relationship itself is the stored object. |
+| 4 | **Context + Causality** | Connected relationships accumulate into meaning: evidence → **Context: High Purchase Intent** → **Causality: pricing request received but no response sent**. |
+| 5 | **Action** | A recommended-action card driven by the relationships — contact within 48h, **€12,000** expected revenue, **63%** probability. |
 
-**Final CTA** — *"Want to See Your Relationships? Semantic OS stores content,
-relationships, context, causality and action feedback. Explore them visually in 2D
-and 3D."*
+**Final CTA — interactive 3D relationship space (miniature Knowledge Map AI).**
+A real **Three.js** scene the visitor can **drag to rotate, scroll to zoom**, with the
+layers stacked in depth: **Records → Relationships → Context → Actions**. Relationships
+are the hero — first-class, clickable objects: click one to open a detail panel with its
+**Meaning, Evidence, Confidence, Saved · Searchable · Reusable**. It demonstrates
+*records become relationships, relationships become context, context becomes actions.*
 
 - Primary: **Explore Relationships in 2D/3D** → <https://map.clawshow.ai> (opens in a new tab)
 - Secondary: **Build Your Semantic OS** → opens a contact modal (see below)
