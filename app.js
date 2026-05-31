@@ -40,12 +40,21 @@
     ]
   };
 
-  // Step 3 — chain of events leading to a discovered opportunity
+  // Step 3 — guided evidence chain. Each node is verified by the visitor.
   const CAUSAL = [
-    { title: "Pricing Request", color: "#0ea5e9" },
-    { title: "Budget Discussed", color: "#8b5cf6" },
-    { title: "No Follow-Up", color: "#fb7185", alert: true },
-    { title: "Opportunity Detected", color: "#f59e0b", risk: true }
+    { title: "Pricing Request", color: "#0ea5e9",
+      kind: "Source", src: "Partner Email · May 12",
+      body: "“Can you send pricing information?”", confirm: "Evidence Confirmed ✓" },
+    { title: "Budget Discussed", color: "#8b5cf6",
+      kind: "Source", src: "Meeting Notes · May 14",
+      body: "Budget discussed<br><strong>€10,000 – €15,000</strong>", confirm: "Evidence Confirmed ✓" },
+    { title: "No Follow-Up", color: "#fb7185", alert: true,
+      kind: "Evidence", src: "Last interaction · May 14",
+      body: "No email detected<br>No WhatsApp detected<br>No meeting detected<br><strong>for 17 days</strong>", confirm: "Evidence Confirmed ✓" },
+    { title: "Opportunity Detected", color: "#f59e0b", risk: true,
+      kind: "AI reasoning", src: "",
+      body: "Pricing requested ✓<br>Budget discussed ✓<br>No follow-up found ✓<br><br>Potential value<br><strong class=\"evi-pop__big\">€12,000</strong>",
+      confirm: "Reveal Opportunity →", reveal: true }
   ];
 
   /* ============================================================
@@ -68,13 +77,13 @@
       sub: "Watch AI pull scattered information toward one person.",
       msg: "AI connects information automatically.",
       widget: "connect",
-      primary: { label: "Show Me What Matters →", go: 3 }
+      primary: { label: "Show Me The Evidence →", go: 3 }
     },
     {
       eyebrow: "Step 3 of 4",
-      title: "AI Finds The Opportunity",
-      sub: "AI follows the chain of events.",
-      msg: "AI does not just connect information. AI discovers value.",
+      title: "AI Shows The Evidence",
+      sub: "AI explains why this opportunity exists.",
+      msg: "AI does not guess. AI follows evidence.",
       widget: "understand",
       primary: { label: "What Should I Do Next? →", go: 4 }
     },
@@ -112,6 +121,8 @@
   const cnBadge = $("[data-cn-badge]");
   const causalEl = $("[data-causal]");
   const moneyEl = $("[data-money]");
+  const eviPop = $("[data-evi-pop]");
+  const eviProgress = $("[data-evi-progress]");
 
   const ctaPrimary = $("[data-cta-primary]");
   const ctaSecondary = $("[data-cta-secondary]");
@@ -201,12 +212,22 @@
     backBtn.hidden = current === 0;
   }
 
+  // kill every step-specific (esp. infinite) animation + remove stray particles
+  function stopAllStepAnims() {
+    killFloat();
+    killCnFlow();
+    killCausalFlow();
+    if (cnHintPulse) { cnHintPulse.kill(); cnHintPulse = null; }
+    document.querySelectorAll(".cn-particle, .money__spark").forEach((e) => e.remove());
+  }
+
   function goTo(idx) {
     idx = Math.max(0, Math.min(SCENES.length - 1, idx));
     const from = current;
     current = idx;
     const s = SCENES[idx];
 
+    stopAllStepAnims(); // never leave old loops running behind a new step
     setStepper(idx);
     setHeadline(s);
     showWidget(s.widget);
@@ -245,7 +266,7 @@
     killFloat();
     // Fewer floating documents on small screens; keeps Step 1 light and fast.
     const small = isSmall();
-    buildChips(small ? 5 : FILES.length);
+    buildChips(small ? 4 : FILES.length);
     const r = field.getBoundingClientRect();
     // Clamp spread to chip size so nothing drifts off the field (no clipping).
     const cw = chipEls[0] ? chipEls[0].offsetWidth : 170;
@@ -298,7 +319,7 @@
   // continuous glowing particles streaming along a curved path (record → Marie)
   function streamParticles(pathEl, color) {
     if (reduceMotion || !hasMotionPath) return;
-    const count = isSmall() ? 2 : 3;
+    const count = isSmall() ? 1 : 3;
     const dur = 1.9;
     for (let k = 0; k < count; k++) {
       const c = document.createElementNS(SVGNS, "circle");
@@ -393,8 +414,14 @@
         { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.9)" }, "<");
     }
 
-    if (cnHint && !reduceMotion) {
-      tl.to(cnHint, { opacity: 1, duration: 0.4 }, ">+0.15");
+    // mobile: once "1 person" is found, stop the streams (no infinite loops)
+    if (isSmall()) {
+      tl.add(() => { killCnFlow(); cnEdges.querySelectorAll(".cn-particle").forEach((e) => e.remove()); }, ">+0.3");
+    }
+
+    if (cnHint && !reduceMotion) tl.to(cnHint, { opacity: 1, duration: 0.4 }, ">+0.15");
+    // gentle invite-to-tap pulse — desktop only (no continuous loop on mobile)
+    if (!reduceMotion && !isSmall()) {
       cnHintPulse = gsap.to(center, { scale: 1.06, duration: 0.9, ease: "sine.inOut", yoyo: true, repeat: -1 });
     }
   }
@@ -412,15 +439,78 @@
   function hideConnectPopup() { cnPopup.hidden = true; }
 
   /* ============================================================
-     STEP 3 — AI finds the opportunity (flow → €12,000 reveal)
+     STEP 3 — AI shows the evidence (guided investigation → earned €12,000)
      ============================================================ */
   let causalFlow = null;
   function killCausalFlow() { if (causalFlow) { causalFlow.kill(); causalFlow = null; } }
+
+  let eviNodes = [], eviConns = [], eviStep = 0;
+
+  function setProgress(n) {
+    if (!eviProgress) return;
+    let t = n + " / 4 Verified";
+    if (n === 3) t += " · Almost there…";
+    eviProgress.textContent = t;
+  }
+
+  function setActiveEvi(idx) {
+    eviStep = idx;
+    eviNodes.forEach((n) => { const h = n.querySelector(".causal__hint"); if (h) h.remove(); });
+    eviNodes.forEach((n, i) => {
+      const done = n.classList.contains("causal__node--done");
+      n.classList.toggle("causal__node--active", i === idx && !done);
+      n.classList.toggle("causal__node--locked", i > idx && !done);
+    });
+    if (idx < eviNodes.length && !eviNodes[idx].classList.contains("causal__node--done")) {
+      const h = document.createElement("span");
+      h.className = "causal__hint";
+      h.textContent = "👆 Tap to verify";
+      eviNodes[idx].appendChild(h);
+      if (!reduceMotion) gsap.fromTo(h, { opacity: 0, y: -4 }, { opacity: 1, y: 0, duration: 0.3 });
+    }
+  }
+
+  function openEvidence(i) {
+    const c = CAUSAL[i];
+    $("[data-evi-kind]").textContent = c.kind;
+    const srcEl = $("[data-evi-src]");
+    srcEl.innerHTML = c.src || "";
+    srcEl.style.display = c.src ? "" : "none";
+    $("[data-evi-body]").innerHTML = c.body;
+    const confirm = $("[data-evi-confirm]");
+    confirm.textContent = c.confirm;
+    confirm.onclick = () => confirmEvidence(i);
+    eviPop.hidden = false;
+    gsap.fromTo(eviPop, { opacity: 0, y: 12, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: "back.out(1.5)" });
+  }
+  function closeEvidence() { eviPop.hidden = true; }
+
+  function confirmEvidence(i) {
+    closeEvidence();
+    const node = eviNodes[i];
+    node.classList.remove("causal__node--active");
+    node.classList.add("causal__node--done");
+    const h = node.querySelector(".causal__hint"); if (h) h.remove();
+    // the connector below this node activates (information confirmed → flows on)
+    if (eviConns[i]) {
+      eviConns[i].classList.add("is-active");
+      if (!reduceMotion) {
+        const sp = eviConns[i].querySelector(".causal__spark");
+        gsap.fromTo(sp, { top: "0%", opacity: 1 }, { top: "100%", opacity: 1, duration: 0.3, ease: "power1.in" });
+      }
+    }
+    setProgress(i + 1);
+    if (CAUSAL[i].reveal) revealOpportunity();
+    else setActiveEvi(i + 1);
+  }
 
   function enterUnderstand() {
     killFloat();
     killCausalFlow();
     causalEl.innerHTML = "";
+    eviNodes = []; eviConns = []; eviStep = 0;
+    if (eviPop) eviPop.hidden = true;
+    setProgress(0);
     const flashEl = $("[data-understand-flash]");
     if (flashEl) gsap.set(flashEl, { opacity: 0 });
     if (moneyEl) {
@@ -429,53 +519,64 @@
       moneyEl.querySelectorAll(".money__spark").forEach((s) => s.remove());
     }
 
-    // build flowing chain: node → animated connector → node → ...
-    const nodes = [], conns = [];
     CAUSAL.forEach((c, i) => {
       if (i > 0) {
         const f = document.createElement("div");
         f.className = "causal__flow";
         f.innerHTML = '<span class="causal__spark"></span>';
         causalEl.appendChild(f);
-        conns.push(f);
+        eviConns.push(f);
       }
       const el = document.createElement("div");
       el.className = "causal__node" + (c.risk ? " causal__node--risk" : c.alert ? " causal__node--alert" : "");
       el.style.setProperty("--cz-color", c.color);
-      el.innerHTML = '<span class="causal__title">' + c.title + "</span>";
+      el.innerHTML = '<span class="causal__check" aria-hidden="true">✓</span><span class="causal__title">' + c.title + "</span>";
+      el.addEventListener("click", () => {
+        if (eviStep === i && !el.classList.contains("causal__node--done")) openEvidence(i);
+      });
       causalEl.appendChild(el);
-      nodes.push(el);
+      eviNodes.push(el);
     });
 
-    const tl = gsap.timeline();
-    // everything fades in
-    tl.fromTo([].concat(nodes, conns), { opacity: 0, y: 8 },
-      { opacity: 1, y: 0, duration: 0.3, stagger: 0.05, ease: "power2.out" });
-    // a bright pulse travels through the chain
-    nodes.forEach((n, i) => {
-      tl.to(n, { boxShadow: "0 0 0 4px rgba(91,108,255,0.22)", duration: 0.16, yoyo: true, repeat: 1, ease: "sine.inOut" },
-        i === 0 ? ">" : "+=0.02");
-      if (conns[i] && !reduceMotion) {
-        const spark = conns[i].querySelector(".causal__spark");
-        tl.fromTo(spark, { top: "0%", opacity: 1 }, { top: "100%", opacity: 1, duration: 0.22, ease: "power1.in" }, "<0.05");
-      }
-    });
+    // chain fades in, then the first node invites a tap
+    gsap.fromTo([].concat(eviNodes, eviConns), { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.3, stagger: 0.05, ease: "power2.out",
+        onComplete: () => setActiveEvi(0) });
+    gsap.set(eviNodes, { clearProps: "boxShadow" });
+  }
 
-    // 💰 huge reveal: screen glow + light bloom + particle burst + scale 0 → 1.4 → 1
+  // only fires once the visitor has verified all four pieces of evidence
+  function revealOpportunity() {
+    const mobile = isSmall();
     const flash = $("[data-understand-flash]");
+    const tl = gsap.timeline();
+    // a pulse travels through the now-proven chain
+    eviNodes.forEach((n, i) => {
+      tl.to(n, { boxShadow: "0 0 0 4px rgba(245,158,11,0.25)", duration: 0.14, yoyo: true, repeat: 1, ease: "sine.inOut" },
+        i === 0 ? ">" : "+=0.05");
+    });
     tl.add(() => { if (moneyEl) moneyEl.hidden = false; }, ">+0.05");
     if (moneyEl) {
       const v = moneyEl.querySelector(".money__value");
       const glow = moneyEl.querySelector(".money__glow");
-      if (flash) tl.fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "power2.out" }, ">");
+      if (flash && !mobile) tl.fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "power2.out" }, ">");
       tl.fromTo(moneyEl, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1.4, duration: 0.45, ease: "power2.out" }, "<");
-      if (glow) tl.fromTo(glow, { opacity: 0.95, scale: 0.2 }, { opacity: 0, scale: 2.6, duration: 0.8, ease: "power2.out" }, "<");
-      if (flash) tl.to(flash, { opacity: 0, duration: 0.75, ease: "power2.out" }, "<0.16");
+      if (glow) tl.fromTo(glow, { opacity: mobile ? 0.7 : 0.95, scale: 0.2 }, { opacity: 0, scale: mobile ? 1.8 : 2.6, duration: 0.7, ease: "power2.out" }, "<");
+      if (flash && !mobile) tl.to(flash, { opacity: 0, duration: 0.75, ease: "power2.out" }, "<0.16");
       tl.add(() => burstParticles(moneyEl), "<");
       tl.to(moneyEl, { scale: 1, duration: 0.35, ease: "power2.inOut" });
       tl.add(() => v.classList.add("is-glow"), "<");
       tl.add(() => v.classList.remove("is-glow"), ">+0.6");
-      if (!reduceMotion) {
+      // on small screens the chain pushes the money below the short viewport —
+      // bring it fully into view so €12,000 is never clipped
+      tl.add(() => {
+        const wrap = widgets.understand;
+        if (wrap && wrap.scrollHeight > wrap.clientHeight + 2) {
+          if (wrap.scrollTo) wrap.scrollTo({ top: wrap.scrollHeight, behavior: "smooth" });
+          else wrap.scrollTop = wrap.scrollHeight;
+        }
+      }, ">");
+      if (!reduceMotion && !mobile) {
         causalFlow = gsap.to(v, { scale: 1.04, duration: 0.95, ease: "sine.inOut", yoyo: true, repeat: -1, transformOrigin: "center" });
       }
     }
@@ -483,7 +584,9 @@
 
   function burstParticles(host) {
     if (reduceMotion) return;
-    const N = 14;
+    const mobile = isSmall();
+    const N = mobile ? 4 : 14;
+    const reachX = mobile ? 38 : 80, reachY = mobile ? 30 : 64;
     for (let i = 0; i < N; i++) {
       const s = document.createElement("span");
       s.className = "money__spark";
@@ -491,8 +594,9 @@
       gsap.set(s, { xPercent: -50, yPercent: -50 });
       const ang = (i / N) * Math.PI * 2 + Math.random() * 0.3;
       gsap.fromTo(s, { x: 0, y: 0, opacity: 1, scale: 1.2 },
-        { x: Math.cos(ang) * (80 + Math.random() * 60), y: Math.sin(ang) * (64 + Math.random() * 44),
-          opacity: 0, scale: 0.3, duration: 0.9, ease: "power2.out",
+        { x: Math.cos(ang) * (reachX + Math.random() * reachX * 0.6),
+          y: Math.sin(ang) * (reachY + Math.random() * reachY * 0.6),
+          opacity: 0, scale: 0.3, duration: 0.85, ease: "power2.out",
           onComplete: () => s.remove() });
     }
   }
@@ -547,7 +651,7 @@
   function buildAmbient() {
     const host = $("[data-ambient]");
     if (!host || reduceMotion) return;
-    const n = isSmall() ? 14 : 26;
+    const n = isSmall() ? 8 : 26;
     for (let i = 0; i < n; i++) {
       const d = document.createElement("span");
       d.className = "dust";
@@ -646,9 +750,11 @@
     backBtn.addEventListener("click", () => goTo(current - 1));
     replayBtn.addEventListener("click", replayDemo);
 
-    // Step 2 popup close
+    // Step 2 + Step 3 popup close buttons
     const cnClose = $("[data-cn-popup-close]");
     if (cnClose) cnClose.addEventListener("click", hideConnectPopup);
+    const eviClose = $("[data-evi-pop-close]");
+    if (eviClose) eviClose.addEventListener("click", closeEvidence);
 
     // modal wiring (the Step 4 secondary CTA opens it via setCTA)
     document.querySelectorAll("[data-open-modal]").forEach((b) => b.addEventListener("click", openModal));

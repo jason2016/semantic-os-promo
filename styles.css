@@ -268,23 +268,51 @@ a { color: inherit; text-decoration: none; }
   background: radial-gradient(circle at 50% 60%, rgba(245, 158, 11, 0.45), rgba(251, 113, 133, 0.18) 40%, transparent 70%);
 }
 .widget[data-w="understand"] > .causal,
-.widget[data-w="understand"] > .money { position: relative; z-index: 1; }
-/* the chain reads as a single glowing river */
-.causal__flow { box-shadow: 0 0 8px rgba(91, 108, 255, 0.25); }
+.widget[data-w="understand"] > .money,
+.widget[data-w="understand"] > .evi__progress { position: relative; z-index: 1; }
+
+/* progress counter */
+.evi__progress {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.04em; color: var(--text-faint);
+  text-align: center; margin-bottom: 10px;
+}
+
 .causal { width: min(320px, 100%); display: flex; flex-direction: column; align-items: stretch; gap: 5px; margin-bottom: 6px; }
 .causal__node {
-  display: flex; align-items: center; gap: 10px;
+  position: relative; display: flex; align-items: center; gap: 9px;
   background: var(--panel); border: 1px solid var(--border-strong);
   border-left: 4px solid var(--cz-color, var(--accent));
   border-radius: var(--radius-sm); padding: 10px 14px; box-shadow: var(--shadow-sm);
+  transition: opacity 0.25s, transform 0.2s, border-color 0.25s, background 0.25s;
 }
 .causal__title { font-size: 13.5px; font-weight: 700; color: var(--text); }
+.causal__check {
+  width: 18px; height: 18px; flex: none; display: none; place-items: center;
+  border-radius: 50%; font-size: 11px; font-weight: 800; color: #fff; background: var(--action);
+}
 .causal__node--risk { background: linear-gradient(165deg, #fff, #fff8ec); border-color: rgba(245, 158, 11, 0.45); }
 .causal__node--risk .causal__title { color: var(--opp); }
-.causal__arrow { text-align: center; color: var(--text-faint); font-size: 15px; line-height: 1; }
-/* animated flow connector between causal nodes */
-.causal__flow { position: relative; width: 2px; height: 18px; margin: 1px auto;
-  background: linear-gradient(var(--border-strong), rgba(120, 140, 210, 0.15)); border-radius: 2px; }
+
+/* investigation states */
+.causal__node--locked { opacity: 0.4; }
+.causal__node--active { cursor: pointer; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91, 108, 255, 0.16), var(--shadow-sm); }
+.causal__node--active:hover { transform: translateY(-1px); }
+.causal__node--done { cursor: default; border-color: rgba(20, 184, 166, 0.5); }
+.causal__node--done .causal__check { display: grid; }
+.causal__node--done .causal__title { color: var(--action); }
+/* "👆 Tap to verify" guide on the active node */
+.causal__hint {
+  margin-left: auto; font-size: 11px; font-weight: 700; color: var(--accent); white-space: nowrap;
+  animation: tapnudge 1.1s ease-in-out infinite;
+}
+@keyframes tapnudge { 0%, 100% { transform: translateY(0); opacity: 0.85; } 50% { transform: translateY(-3px); opacity: 1; } }
+
+/* flow connector between nodes — activates once evidence is confirmed */
+.causal__flow {
+  position: relative; width: 2px; height: 18px; margin: 1px auto; border-radius: 2px;
+  background: var(--border-strong); transition: background 0.3s;
+}
+.causal__flow.is-active { background: linear-gradient(var(--action), rgba(91, 108, 255, 0.6)); box-shadow: 0 0 8px rgba(20, 184, 166, 0.4); }
 .causal__spark {
   position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%);
   width: 8px; height: 8px; border-radius: 50%; opacity: 0;
@@ -312,6 +340,33 @@ a { color: inherit; text-decoration: none; }
 }
 .money__value.is-glow { filter: drop-shadow(0 0 40px rgba(245, 158, 11, 0.95)); }
 .money__cap { font-size: 14px; font-weight: 700; color: var(--opp); }
+
+/* evidence inspector popup */
+.evi-pop {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 8;
+  width: min(300px, 90%); text-align: left;
+  background: var(--panel); border: 1px solid rgba(91, 108, 255, 0.3);
+  border-radius: var(--radius); box-shadow: 0 26px 60px -22px rgba(40, 64, 140, 0.55);
+  padding: 18px 18px 16px;
+}
+.evi-pop[hidden] { display: none; }
+.evi-pop__close {
+  position: absolute; top: 9px; right: 11px; width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--panel-2);
+  font-size: 16px; line-height: 1; color: var(--text-dim); cursor: pointer;
+}
+.evi-pop__close:hover { color: var(--text); }
+.evi-pop__kind {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent);
+}
+.evi-pop__src { margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--text-faint); }
+.evi-pop__body { margin: 10px 0 14px; font-size: 14px; color: var(--text); line-height: 1.55; }
+.evi-pop__body strong { font-weight: 800; }
+.evi-pop__big {
+  display: inline-block; margin-top: 4px; font-size: 30px; letter-spacing: -0.02em;
+  background: linear-gradient(120deg, #f59e0b, #fb7185); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.evi-pop__confirm { width: 100%; justify-content: center; }
 
 /* ---------- Step 4: Ask anything (search → lit path → recommendation) ---------- */
 .widget[data-w="act"] { display: none; place-items: center; overflow-y: auto; }
@@ -401,6 +456,9 @@ a { color: inherit; text-decoration: none; }
 .btn--ghost { color: var(--text); background: var(--panel); border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
 .btn--ghost:hover { transform: translateY(-2px); border-color: var(--accent); color: var(--accent); }
 .cta-back { font-size: 14px; padding: 11px 18px; }
+/* .btn sets display:inline-flex, which would otherwise override the [hidden] attr —
+   force hidden buttons to actually disappear (no stray empty pills on step 1) */
+.btn[hidden] { display: none !important; }
 
 /* ---------- Final CTA: Knowledge Map AI ---------- */
 .finalcta { max-width: 860px; margin: 44px auto 0; padding: 18px 28px 8px; }
@@ -546,9 +604,17 @@ a { color: inherit; text-decoration: none; }
   .cn-rec__dot { width: 38px; height: 38px; font-size: 17px; }
   .cn-node__label { font-size: 11px; }
 
-  /* Step 3 — action card */
+  /* Step 3 — compact chain + money sized so it is NEVER clipped */
+  .causal__node { padding: 8px 12px; }
+  .causal__title { font-size: 12.5px; }
+  .money__value { font-size: clamp(40px, 13vw, 58px); }
+  .money { padding-bottom: 10px; }
+  .widget[data-w="understand"] { padding-bottom: 28px; }
+
+  /* Step 4 — action card */
   .actcard__title { font-size: 20px; }
   .actcard__value strong { font-size: 23px; }
+  .widget[data-w="act"] { padding-bottom: 24px; }
 
   /* Final CTA — stack buttons full-width */
   .finalcta__actions { flex-direction: column; align-items: stretch; }

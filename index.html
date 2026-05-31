@@ -73,14 +73,24 @@
         </div>
       </div>
 
-      <!-- Step 3: AI finds the opportunity (glowing river → €12,000 reveal) -->
+      <!-- Step 3: AI shows the evidence (guided investigation → earned €12,000) -->
       <div class="widget" data-w="understand">
         <span class="understand-flash" data-understand-flash aria-hidden="true"></span>
+        <div class="evi__progress" data-evi-progress>0 / 4 Verified</div>
         <div class="causal" data-causal></div>
         <div class="money" data-money hidden>
           <span class="money__glow" aria-hidden="true"></span>
           <span class="money__value">💰 €12,000</span>
           <span class="money__cap">AI found a missed opportunity</span>
+        </div>
+
+        <!-- evidence inspector popup -->
+        <div class="evi-pop" data-evi-pop hidden>
+          <button class="evi-pop__close" data-evi-pop-close type="button" aria-label="Close">×</button>
+          <span class="evi-pop__kind" data-evi-kind></span>
+          <div class="evi-pop__src" data-evi-src></div>
+          <div class="evi-pop__body" data-evi-body></div>
+          <button class="btn btn--primary evi-pop__confirm" data-evi-confirm type="button"></button>
         </div>
       </div>
 
