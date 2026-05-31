@@ -504,13 +504,25 @@ a { color: inherit; text-decoration: none; }
   }
 }
 
+/* First-screen optimization for everything under 768px:
+   tighter hero + shorter chaos field so the CTA is visible without scrolling. */
+@media (max-width: 768px) {
+  .stage { padding-top: 4px; }
+  .headline { min-height: auto; margin-bottom: 10px; }
+  .eyebrow { margin-bottom: 6px; font-size: 11px; }
+  .stitle { font-size: clamp(20px, 5.4vw, 27px); line-height: 1.12; }
+  .ssub { font-size: 14px; margin-top: 8px; max-width: 460px; }
+  .smsg { font-size: 12.5px; margin-top: 8px; }
+  .viewport { height: clamp(270px, 40vh, 360px); }
+  .cta-row { margin-top: 14px; }
+}
+
 /* Phones: collapse panels, stack everything vertically */
 @media (max-width: 560px) {
   .topbar { padding: 16px 14px 6px; gap: 12px; }
   .stage { padding: 8px 14px 24px; }
   .finalcta { padding: 18px 14px 8px; }
   .finalcta__inner { padding: 30px 18px 28px; }
-  .viewport { height: clamp(470px, 72vh, 620px); }
 
   /* Step 1 */
   .filechip { width: 168px; }

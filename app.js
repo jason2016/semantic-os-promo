@@ -12,6 +12,9 @@
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const MOBILE_Q = window.matchMedia("(max-width: 560px)");
   const isMobile = () => MOBILE_Q.matches;
+  // first-screen optimizations target everything under 768px (phones + small tablets)
+  const SMALL_Q = window.matchMedia("(max-width: 768px)");
+  const isSmall = () => SMALL_Q.matches;
 
   /* ============================================================
      DATA
@@ -166,8 +169,19 @@
     });
   }
 
+  let headlineInited = false;
   function setHeadline(s) {
     const els = [eyebrow, titleEl, subEl, msgEl];
+    // First render: text is already pre-filled in HTML — show it instantly, no fade.
+    if (!headlineInited) {
+      headlineInited = true;
+      eyebrow.textContent = s.eyebrow;
+      titleEl.textContent = s.title;
+      subEl.textContent = s.sub;
+      msgEl.textContent = s.msg || "";
+      gsap.set(els, { opacity: 1, y: 0 });
+      return;
+    }
     gsap.to(els, {
       opacity: 0, y: -8, duration: 0.25, stagger: 0.04,
       onComplete: () => {
@@ -244,21 +258,26 @@
 
   function enterScatter() {
     killFloat();
-    // Fewer floating documents on mobile for clarity
-    buildChips(isMobile() ? 6 : FILES.length);
+    // Fewer floating documents on small screens; keeps Step 1 light and fast.
+    const small = isSmall();
+    buildChips(small ? 4 : FILES.length);
     const r = field.getBoundingClientRect();
-    // Clamp spread to chip size so nothing drifts off the field (no clipping)
+    // Clamp spread to chip size so nothing drifts off the field (no clipping).
     const cw = chipEls[0] ? chipEls[0].offsetWidth : 170;
     const chh = chipEls[0] ? chipEls[0].offsetHeight : 50;
     const sx = Math.max(20, r.width / 2 - cw / 2 - 8);
     const sy = Math.max(20, r.height / 2 - chh / 2 - 8);
+    // Mobile: near-instant, minimal stagger so cards are visible within ~0.5s.
+    const dur = small ? 0.35 : 0.8;
+    const stg = small ? 0.04 : 0.045;
+    const ease = small ? "power2.out" : "back.out(1.4)";
     chipEls.forEach((el, i) => {
       const x = (Math.random() * 2 - 1) * sx;
       const y = (Math.random() * 2 - 1) * sy;
       const rot = (Math.random() * 2 - 1) * 9;
-      gsap.fromTo(el, { x: 0, y: 0, rotation: 0, scale: 0.6, opacity: 0 },
-        { x, y, rotation: rot, scale: 1, opacity: 1, duration: 0.8, delay: i * 0.045,
-          ease: "back.out(1.4)", onComplete: () => startFloat(el, i) });
+      gsap.fromTo(el, { x: 0, y: 0, rotation: 0, scale: small ? 0.85 : 0.6, opacity: 0 },
+        { x, y, rotation: rot, scale: 1, opacity: 1, duration: dur, delay: i * stg,
+          ease: ease, onComplete: () => startFloat(el, i) });
     });
   }
 
@@ -487,15 +506,52 @@
   ];
   const C_RECORD = "#8b5cf6", C_REL = "#5b6cff", C_CTX = "#0ea5e9", C_ACT = "#14b8a6";
 
+  const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js";
+  const ORBIT_URL = "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js";
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = src; s.async = true;
+      s.onload = resolve; s.onerror = () => reject(new Error("failed " + src));
+      document.head.appendChild(s);
+    });
+  }
+  function ensureThree() {
+    return (window.THREE ? Promise.resolve() : loadScript(THREE_URL))
+      .then(() => (window.THREE && THREE.OrbitControls ? Promise.resolve() : loadScript(ORBIT_URL)));
+  }
+
+  // Lazy entry point: only load Three.js + build the scene once the final CTA
+  // is about to enter view, so it never delays the first screen.
   function initKmap() {
     const mount = $("[data-kmap-canvas]");
     const kmapEl = $("[data-kmap]");
     if (!mount) return;
-    if (typeof THREE === "undefined") {
-      mount.innerHTML = '<div class="kmap__fallback">3D view needs an internet connection to load.</div>';
-      return;
+    let booted = false;
+    function boot() {
+      if (booted) return;
+      booted = true;
+      ensureThree().then(() => buildKmap(mount, kmapEl)).catch(() => {
+        mount.innerHTML = '<div class="kmap__fallback">3D view needs an internet connection to load.</div>';
+      });
     }
+    // Defer the actual load to idle time so the Three.js download/parse never
+    // competes with the first screen's paint.
+    function schedule() {
+      const idle = window.requestIdleCallback || function (f) { return setTimeout(f, 400); };
+      idle(boot, { timeout: 3000 });
+    }
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver((ents) => {
+        if (ents[0].isIntersecting) { io.disconnect(); schedule(); }
+      }, { rootMargin: "120px" });
+      io.observe(kmapEl);
+    } else {
+      schedule();
+    }
+  }
 
+  function buildKmap(mount, kmapEl) {
     const W0 = kmapEl.clientWidth || 800, H0 = kmapEl.clientHeight || 440;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(42, W0 / H0, 0.1, 1000);

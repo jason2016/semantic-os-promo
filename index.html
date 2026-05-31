@@ -34,9 +34,9 @@
   <!-- ============ JOURNEY STAGE ============ -->
   <main class="stage">
     <div class="headline">
-      <span class="eyebrow" data-eyebrow></span>
-      <h1 class="stitle" data-title></h1>
-      <p class="ssub" data-sub></p>
+      <span class="eyebrow" data-eyebrow>Step 1 · Chaos</span>
+      <h1 class="stitle" data-title>You Have Information Everywhere.</h1>
+      <p class="ssub" data-sub>Emails, notes, visitor lists, pricing requests, meeting notes and conversations are scattered across systems.</p>
       <p class="smsg" data-msg></p>
     </div>
 
@@ -105,7 +105,7 @@
     <!-- CTA row -->
     <div class="cta-row">
       <button class="btn btn--ghost cta-back" data-back type="button" hidden>← Back</button>
-      <button class="btn btn--primary" data-cta-primary type="button"></button>
+      <button class="btn btn--primary" data-cta-primary type="button">Organize Information →</button>
     </div>
   </main>
 
@@ -188,10 +188,9 @@
     </div>
   </div>
 
-  <!-- GSAP + Three.js (CDN) -->
+  <!-- GSAP (drives the journey). Three.js is lazy-loaded by app.js only when the
+       final CTA scrolls into view, so it never blocks the first screen. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
