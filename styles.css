@@ -153,170 +153,209 @@ a { color: inherit; text-decoration: none; }
 }
 .filechip__name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.25; }
 
-/* ---------- Step 2: information sources (CSS Grid, no overlap) ---------- */
-.sources-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  height: 100%;
-  align-content: start;
-  overflow: auto;
+/* ---------- Step 2: AI connects everything (simple graph) ---------- */
+.cn-edges { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
+.cn-edges path { fill: none; stroke: url(#cnGrad); stroke-width: 2.5; stroke-linecap: round; }
+/* soft curved "stream beds" + glowing particles flowing along them */
+.cn-flow { stroke: url(#cnGrad); stroke-width: 1.6; opacity: 0.22; }
+.cn-particle { fill: var(--accent); filter: drop-shadow(0 0 4px rgba(91, 108, 255, 0.75)); }
+.cn-nodes { position: absolute; inset: 0; z-index: 2; }
+.cn-node {
+  position: absolute; left: 0; top: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
 }
-.source-card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-top: 3px solid var(--src-color, var(--accent));
-  border-radius: var(--radius-sm);
-  padding: 14px 14px 12px;
+.cn-node__label {
+  font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap;
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  padding: 2px 9px; border-radius: 999px; border: 1px solid var(--border);
+}
+/* record nodes (supporting) */
+.cn-rec__dot {
+  width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center;
+  font-size: 20px; background: color-mix(in srgb, var(--cn-color, var(--accent)) 16%, #fff);
+  border: 1px solid color-mix(in srgb, var(--cn-color) 35%, var(--border));
   box-shadow: var(--shadow-sm);
-  display: flex; flex-direction: column;
 }
-.source-card__head { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
-.source-card__ico {
-  width: 28px; height: 28px; flex: none; display: grid; place-items: center; font-size: 14px;
-  border-radius: 8px; background: color-mix(in srgb, var(--src-color) 14%, #fff);
+/* centre node — Marie Chen (the hero of this step) */
+.cn-center { background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
+.cn-center__avatar {
+  width: 78px; height: 78px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 26px; font-weight: 800; color: #fff;
+  background: linear-gradient(140deg, var(--accent-2), var(--accent));
+  box-shadow: 0 14px 32px -8px rgba(91, 108, 255, 0.7), 0 0 0 8px rgba(91, 108, 255, 0.12);
+  transition: box-shadow 0.2s;
 }
-.source-card__name { font-size: 13.5px; font-weight: 700; color: var(--text); }
-.source-card__count {
-  margin-left: auto; font-size: 11px; font-weight: 600; color: var(--text-faint);
-  background: var(--bg-2); padding: 1px 8px; border-radius: 999px;
-}
-.doclist { list-style: none; display: flex; flex-direction: column; gap: 5px; }
-.doclist li {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 12.5px; font-weight: 500; color: var(--text-dim);
-  padding: 6px 8px; border-radius: 8px; background: var(--panel-2);
-  border: 1px solid var(--border);
-}
-.doclist li::before { content: "📄"; font-size: 12px; filter: grayscale(0.2); }
+.cn-center:hover .cn-center__avatar { box-shadow: 0 16px 38px -6px rgba(91, 108, 255, 0.85), 0 0 0 11px rgba(91, 108, 255, 0.18); }
+.cn-center__label { font-size: 13px; font-weight: 700; }
 
-/* ---------- Step 3: relationship records (the hero) ---------- */
-.widget[data-w="relations"] { overflow-y: auto; }
-.relrecs {
-  display: grid; grid-template-columns: repeat(2, 1fr);
-  gap: 14px; align-content: start;
+.cn-hint {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 3;
+  font-size: 13px; font-weight: 600; color: var(--accent);
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border: 1px solid rgba(91, 108, 255, 0.25); border-radius: 999px;
+  padding: 7px 15px; box-shadow: var(--shadow-sm);
 }
-.relrec {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-soft);
-  padding: 14px 15px;
-  display: flex; flex-direction: column; gap: 11px;
+
+.cn-popup {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5;
+  width: min(280px, 88%); text-align: center;
+  background: var(--panel); border: 1px solid rgba(91, 108, 255, 0.3);
+  border-radius: var(--radius); box-shadow: 0 24px 56px -18px rgba(40, 64, 140, 0.5);
+  padding: 22px 22px 18px;
 }
-/* the labeled connection — the relationship is the stored object */
-.relrec__wire { display: flex; align-items: center; gap: 8px; }
-.wirenode {
-  display: flex; align-items: center; gap: 7px;
-  background: var(--panel-2); border: 1px solid var(--border);
-  border-radius: 9px; padding: 6px 9px; min-width: 0;
+.cn-popup[hidden] { display: none; }
+.cn-popup__close {
+  position: absolute; top: 10px; right: 12px; width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--panel-2);
+  font-size: 16px; line-height: 1; color: var(--text-dim); cursor: pointer;
 }
-.wirenode__ico {
-  width: 22px; height: 22px; flex: none; display: grid; place-items: center; font-size: 12px;
-  border-radius: 6px; background: color-mix(in srgb, var(--wire-color, var(--accent)) 16%, #fff);
+.cn-popup__close:hover { color: var(--text); }
+.cn-popup__avatar {
+  width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 8px; display: grid; place-items: center;
+  font-size: 17px; font-weight: 800; color: #fff;
+  background: linear-gradient(140deg, var(--accent-2), var(--accent));
 }
-.wirenode__name {
-  font-size: 11.5px; font-weight: 600; color: var(--text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.cn-popup__name { font-size: 18px; font-weight: 800; }
+.cn-popup__sub { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); margin: 10px 0 8px; }
+.cn-popup__list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.cn-popup__list li {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 14px; font-weight: 600; color: var(--text);
 }
-.wire { flex: 1; position: relative; height: 24px; min-width: 44px; }
-.wire::before {
-  content: ""; position: absolute; top: 50%; left: 0; right: 0; height: 2px;
-  transform: translateY(-50%);
-  background: linear-gradient(90deg, var(--accent-2), var(--accent));
-  border-radius: 2px;
+.cn-popup__list li::before {
+  content: "✓"; width: 18px; height: 18px; flex: none; display: grid; place-items: center;
+  border-radius: 50%; font-size: 10px; font-weight: 800; color: #fff; background: var(--action);
 }
-.wire__label {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+.cn-popup__tag {
+  margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border);
+  font-size: 13px; font-weight: 700; color: var(--accent);
+}
+
+/* data packets flowing toward Marie Chen (Step 2) */
+.cn-packet { fill: var(--accent); }
+
+/* "AI FOUND / 1 PERSON" badge — the first wow */
+.cn-badge {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 4;
+  display: flex; flex-direction: column; align-items: center; gap: 1px; text-align: center;
+  color: #fff; background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  padding: 9px 22px; border-radius: 16px;
+  box-shadow: 0 14px 30px -8px rgba(91, 108, 255, 0.75);
   white-space: nowrap;
-  font-size: 10.5px; font-weight: 700; letter-spacing: 0.01em; color: var(--accent);
-  background: var(--panel); border: 1px solid rgba(91, 108, 255, 0.28);
-  padding: 3px 9px; border-radius: 999px; box-shadow: var(--shadow-sm);
 }
-.relrec__meaning { font-size: 13px; color: var(--text-dim); line-height: 1.4; }
-.relrec__meaning b { color: var(--text); font-weight: 600; }
-.relrec__meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: auto; }
-.relrec__conf {
-  font-size: 11px; font-weight: 700; color: var(--g-context, #0ea5e9);
-  background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.22);
-  padding: 3px 9px; border-radius: 999px;
-}
-.relrec__flag {
-  font-size: 10.5px; font-weight: 600; color: var(--text-dim);
-  display: inline-flex; align-items: center; gap: 4px;
-}
-.relrec__flag::before { content: "✓"; color: var(--action); font-weight: 800; }
+.cn-badge[hidden] { display: none; }
+.cn-badge__lead { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; opacity: 0.9; }
+.cn-badge__big { font-size: 20px; font-weight: 800; letter-spacing: 0.02em; line-height: 1; }
 
-/* ---------- Step 4: context + causality ---------- */
-.widget[data-w="context"] { display: none; place-items: center; overflow-y: auto; }
-.widget[data-w="context"].is-active { display: grid; }
-.ctx { width: min(560px, 100%); display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.ctx__elabel {
-  display: block; text-align: center;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--text-faint); margin-bottom: 10px;
-}
-.ctx__chips { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; }
-.evchip {
-  font-size: 12.5px; font-weight: 600; color: var(--text);
+/* ---------- Step 3: AI finds the opportunity (chain → money) ---------- */
+.widget[data-w="understand"] { display: none; place-items: center; overflow-y: auto; }
+.widget[data-w="understand"].is-active { display: grid; }
+.causal { width: min(320px, 100%); display: flex; flex-direction: column; align-items: stretch; gap: 5px; margin-bottom: 6px; }
+.causal__node {
+  display: flex; align-items: center; gap: 10px;
   background: var(--panel); border: 1px solid var(--border-strong);
-  padding: 7px 13px; border-radius: 999px; box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--cz-color, var(--accent));
+  border-radius: var(--radius-sm); padding: 10px 14px; box-shadow: var(--shadow-sm);
 }
-.evchip--alert { color: var(--opp); border-color: rgba(245, 158, 11, 0.4); }
-.ctx__arrow { font-size: 20px; color: var(--text-faint); line-height: 1; }
-.ctxcard {
-  width: 100%; text-align: center;
-  border-radius: var(--radius); padding: 18px 20px;
-  display: flex; flex-direction: column; gap: 4px;
+.causal__title { font-size: 13.5px; font-weight: 700; color: var(--text); }
+.causal__node--risk { background: linear-gradient(165deg, #fff, #fff8ec); border-color: rgba(245, 158, 11, 0.45); }
+.causal__node--risk .causal__title { color: var(--opp); }
+.causal__arrow { text-align: center; color: var(--text-faint); font-size: 15px; line-height: 1; }
+/* animated flow connector between causal nodes */
+.causal__flow { position: relative; width: 2px; height: 18px; margin: 1px auto;
+  background: linear-gradient(var(--border-strong), rgba(120, 140, 210, 0.15)); border-radius: 2px; }
+.causal__spark {
+  position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%);
+  width: 8px; height: 8px; border-radius: 50%; opacity: 0;
+  background: var(--accent); box-shadow: 0 0 10px 2px rgba(91, 108, 255, 0.8);
 }
-.ctxcard__tag { font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
-.ctxcard__value { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
-.ctxcard--context {
-  background: linear-gradient(165deg, #ffffff, #eef6ff);
-  border: 1px solid rgba(14, 165, 233, 0.3);
-  box-shadow: 0 16px 40px -18px rgba(14, 165, 233, 0.45);
-}
-.ctxcard--context .ctxcard__tag { color: #0ea5e9; }
-.ctxcard--causality {
-  background: linear-gradient(165deg, #ffffff, #fff5f7);
-  border: 1px solid rgba(251, 113, 133, 0.32);
-  box-shadow: 0 16px 40px -18px rgba(251, 113, 133, 0.45);
-}
-.ctxcard--causality .ctxcard__tag { color: #fb7185; }
 
-/* ---------- Step 5: action ---------- */
-.widget[data-w="action"] { display: none; place-items: center; }
-.widget[data-w="action"].is-active { display: grid; }
-.actioncard {
-  width: min(470px, 100%);
-  background: linear-gradient(165deg, #ffffff, #eefcf8);
-  border: 1px solid rgba(20, 184, 166, 0.3);
+/* 💰 the missed opportunity — the largest element on the page */
+.money { position: relative; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 8px; }
+.money[hidden] { display: none; }
+.money__glow {
+  position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+  width: 200px; height: 200px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.55), transparent 68%);
+}
+.money__spark {
+  position: absolute; top: 40%; left: 50%; width: 8px; height: 8px; border-radius: 50%;
+  background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.8); pointer-events: none;
+}
+.money__value {
+  font-size: clamp(40px, 11vw, 76px); font-weight: 800; letter-spacing: -0.03em; line-height: 1;
+  background: linear-gradient(120deg, #f59e0b, #fb7185);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 10px 24px rgba(245, 158, 11, 0.35));
+  transition: filter 0.3s var(--ease);
+}
+.money__value.is-glow { filter: drop-shadow(0 0 30px rgba(245, 158, 11, 0.9)); }
+.money__cap { font-size: 14px; font-weight: 700; color: var(--opp); }
+
+/* ---------- Step 4: Ask anything (search → lit path → recommendation) ---------- */
+.widget[data-w="act"] { display: none; place-items: center; overflow-y: auto; }
+.widget[data-w="act"].is-active { display: grid; }
+.ask { width: min(440px, 100%); display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.ask__bar {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  background: var(--panel); border: 1px solid var(--border-strong);
+  border-radius: 999px; padding: 13px 18px; box-shadow: var(--shadow-sm);
+}
+.ask__icon { font-size: 16px; }
+.ask__q { font-size: 15px; font-weight: 600; color: var(--text); }
+.ask__q.is-typing::after { content: "▍"; color: var(--accent); animation: caret 0.7s steps(1) infinite; }
+@keyframes caret { 50% { opacity: 0; } }
+/* the visible reasoning — a numbered path that lights up 1 → 6 */
+.ask__path { width: min(300px, 100%); display: flex; flex-direction: column; gap: 6px; }
+.ask__step {
+  display: flex; align-items: center; gap: 11px;
+  background: var(--panel); border: 1px solid var(--border-strong);
+  border-radius: 999px; padding: 8px 14px;
+  font-size: 13px; font-weight: 600; color: var(--text-dim); opacity: 0.55;
+  transition: all 0.25s var(--ease);
+}
+.ask__num {
+  width: 22px; height: 22px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; font-size: 11px; font-weight: 800; font-style: normal;
+  background: var(--bg-2); color: var(--text-faint);
+}
+.ask__step.is-lit {
+  opacity: 1; border-color: transparent; color: var(--text);
+  background: linear-gradient(120deg, rgba(91, 108, 255, 0.12), rgba(139, 92, 246, 0.12));
+  box-shadow: var(--shadow-sm);
+}
+.ask__step.is-lit .ask__num { background: linear-gradient(120deg, var(--accent), var(--accent-2)); color: #fff; }
+.ask__step--money.is-lit { background: linear-gradient(120deg, rgba(245, 158, 11, 0.14), rgba(251, 113, 133, 0.14)); }
+.ask__step--money.is-lit .ask__num { background: linear-gradient(120deg, #f59e0b, #fb7185); }
+.ask__step--money.is-lit span:last-child { font-weight: 800; }
+.ask__step--final.is-lit { background: linear-gradient(120deg, rgba(20, 184, 166, 0.14), rgba(91, 108, 255, 0.12)); }
+.ask__step--final.is-lit .ask__num { background: linear-gradient(120deg, var(--action), var(--accent)); }
+.actcard {
+  width: 100%; text-align: left;
+  background: linear-gradient(165deg, #ffffff, #eef1ff);
+  border: 1px solid rgba(91, 108, 255, 0.28);
   border-radius: var(--radius);
-  padding: 28px 28px 24px;
-  box-shadow: 0 20px 50px -18px rgba(20, 184, 166, 0.5);
+  padding: 20px 22px 18px;
+  box-shadow: 0 18px 46px -18px rgba(91, 108, 255, 0.45);
 }
-.actioncard__tag { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--action); }
-.actioncard__title { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; margin: 8px 0 16px; }
-.actioncard__reason { margin-bottom: 18px; }
-.actioncard__reasonlabel {
-  display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--text-faint); margin-bottom: 9px;
+.actcard__tag { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.actcard__title { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; margin: 6px 0 14px; }
+.actcard__reasons { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-bottom: 16px; }
+.actcard__reasons li { display: flex; align-items: center; gap: 10px; font-size: 14.5px; font-weight: 500; color: var(--text); }
+.actcard__reasons li::before {
+  content: "✓"; width: 20px; height: 20px; flex: none; display: grid; place-items: center;
+  border-radius: 50%; font-size: 11px; font-weight: 800; color: #fff; background: var(--action);
 }
-.actioncard__reason ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-.actioncard__reason li { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; color: var(--text); }
-.actioncard__reason li::before {
-  content: ""; width: 7px; height: 7px; flex: none; border-radius: 50%;
-  background: var(--action); box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.16);
+.actcard__value {
+  padding-top: 14px; border-top: 1px solid var(--border);
+  font-size: 13px; font-weight: 600; color: var(--text-dim);
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
 }
-.actioncard__metrics { display: flex; gap: 14px; padding-top: 18px; border-top: 1px solid var(--border); }
-.actioncard__metrics div { flex: 1; display: flex; flex-direction: column; align-items: flex-start; }
-.actioncard__metrics strong {
+.actcard__value strong {
   font-size: 26px; font-weight: 800; letter-spacing: -0.02em;
   background: linear-gradient(120deg, var(--accent), var(--accent-2));
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.actioncard__metrics i { display: none; }
-.actioncard__metrics span { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); margin-top: 2px; }
 
 /* ---------- Buttons + CTA row ---------- */
 .cta-row { margin-top: 18px; display: flex; gap: 12px; align-items: center; justify-content: center; min-height: 54px; flex-wrap: wrap; }
@@ -350,83 +389,29 @@ a { color: inherit; text-decoration: none; }
 .finalcta__title { font-size: clamp(24px, 3.4vw, 34px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.12; }
 .finalcta__text { margin: 14px auto 0; max-width: 520px; font-size: 16px; color: var(--text-dim); }
 
-/* ---------- Interactive 3D relationship space ---------- */
-.kmap {
-  position: relative;
-  height: 480px;
-  margin: 24px auto 26px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: radial-gradient(circle at 50% 38%, #ffffff, #eef3fc 92%);
-  box-shadow: var(--shadow-sm) inset;
-  overflow: hidden;
+/* ---------- Small static preview (destination teaser only) ---------- */
+.cta-preview {
+  display: block;
+  width: min(300px, 90%);
+  height: auto;
+  margin: 22px auto 24px;
+  overflow: visible;
 }
-.kmap__canvas { position: absolute; inset: 0; cursor: grab; touch-action: none; }
-.kmap__canvas:active { cursor: grabbing; }
-.kmap__canvas canvas { display: block; }
-
-/* layer legend HUD (Records → Relationships → Context → Actions) */
-.kmap__layers {
-  position: absolute; top: 14px; left: 14px; z-index: 3;
-  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
-  background: color-mix(in srgb, var(--panel) 82%, transparent);
-  border: 1px solid var(--border); border-radius: 12px;
-  padding: 10px 12px; box-shadow: var(--shadow-sm); backdrop-filter: blur(6px);
-  text-align: left;
+.cta-preview__line { stroke: rgba(120, 140, 210, 0.5); stroke-width: 2; }
+.cta-preview__leaf circle {
+  fill: #fff; stroke: var(--accent-2); stroke-width: 2;
 }
-.kmap__layer {
-  display: inline-flex; align-items: center; gap: 7px;
-  font-size: 12px; font-weight: 600; color: var(--text);
+.cta-preview__leaf text {
+  fill: var(--text-dim); font-size: 12px; font-weight: 600;
+  text-anchor: middle; font-family: inherit;
 }
-.kmap__layer::before {
-  content: ""; width: 9px; height: 9px; border-radius: 50%;
-  background: var(--lc, var(--accent)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--lc) 18%, transparent);
+.cta-preview__hub {
+  fill: var(--accent);
 }
-.kmap__layer--hero { font-weight: 800; color: var(--accent); }
-.kmap__arrow { font-size: 11px; color: var(--text-faint); margin-left: 3px; line-height: 1; }
-
-.kmap__hint {
-  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 3;
-  font-size: 12px; font-weight: 500; color: var(--text-dim);
-  background: color-mix(in srgb, var(--panel) 82%, transparent);
-  border: 1px solid var(--border); border-radius: 999px;
-  padding: 6px 14px; box-shadow: var(--shadow-sm); backdrop-filter: blur(6px);
-  white-space: nowrap;
+.cta-preview__hublabel {
+  fill: #fff; font-size: 15px; font-weight: 800;
+  text-anchor: middle; dominant-baseline: central; font-family: inherit;
 }
-
-/* relationship detail panel — compact, semi-transparent, stays out of the centre */
-.kmap__detail {
-  position: absolute; top: 14px; right: 14px; z-index: 4;
-  width: 208px; text-align: left;
-  background: color-mix(in srgb, var(--panel) 86%, transparent);
-  border: 1px solid rgba(91, 108, 255, 0.3);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 16px 38px -18px rgba(40, 64, 140, 0.4);
-  padding: 13px 14px 12px;
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-}
-.kmap__detail[hidden] { display: none; }
-.kmap__dclose {
-  position: absolute; top: 9px; right: 10px;
-  width: 24px; height: 24px; border-radius: 50%;
-  border: 1px solid var(--border); background: var(--panel-2);
-  font-size: 15px; line-height: 1; color: var(--text-dim); cursor: pointer;
-}
-.kmap__dclose:hover { color: var(--text); }
-.kmap__dtag { font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
-.kmap__dlabel { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; margin: 4px 0 11px; }
-.kmap__dl { display: flex; flex-direction: column; gap: 8px; margin-bottom: 11px; }
-.kmap__dl dt { font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); }
-.kmap__dl dd { font-size: 12.5px; color: var(--text); line-height: 1.38; }
-.kmap__conf {
-  font-weight: 700; color: #0ea5e9;
-  background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.22);
-  padding: 2px 9px; border-radius: 999px; font-size: 11.5px;
-}
-.kmap__dflags { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 11px; border-top: 1px solid var(--border); }
-.kmap__flag { font-size: 10.5px; font-weight: 600; color: var(--text-dim); display: inline-flex; align-items: center; gap: 5px; }
-.kmap__flag::before { content: "✓"; color: var(--action); font-weight: 800; }
-.kmap__fallback { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-dim); font-size: 14px; }
 
 .finalcta__actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
 
@@ -495,10 +480,8 @@ a { color: inherit; text-decoration: none; }
 
 /* Tablet / large phone */
 @media (max-width: 760px) {
-  .sources-grid { grid-template-columns: repeat(2, 1fr); }
-  .relrecs { grid-template-columns: 1fr; }
-  /* let tall result cards scroll inside the viewport instead of clipping */
-  .widget[data-w="context"], .widget[data-w="action"] {
+  /* let tall step content scroll inside the viewport instead of clipping */
+  .widget[data-w="understand"], .widget[data-w="act"] {
     place-items: start center; overflow-y: auto;
     padding-top: 16px; padding-bottom: 16px;
   }
@@ -527,35 +510,18 @@ a { color: inherit; text-decoration: none; }
   /* Step 1 */
   .filechip { width: 168px; }
 
-  /* Step 2 — collapse Information Sources into one clean column */
-  .sources-grid { grid-template-columns: 1fr; gap: 11px; }
-  .source-card { padding: 12px 13px 11px; }
+  /* Step 2 — smaller graph nodes so the simple graph fits a phone */
+  .cn-center__avatar { width: 64px; height: 64px; font-size: 22px; }
+  .cn-rec__dot { width: 38px; height: 38px; font-size: 17px; }
+  .cn-node__label { font-size: 11px; }
 
-  /* Step 3 — stack each relationship's two sources vertically with the label between */
-  .relrec__wire { flex-direction: column; align-items: stretch; gap: 6px; }
-  .wirenode { justify-content: center; }
-  .wire { height: 26px; width: 100%; }
-  .wire::before { left: 50%; right: auto; top: 0; bottom: 0; width: 2px; height: 100%; background: linear-gradient(180deg, var(--accent-2), var(--accent)); }
-
-  /* Step 4 — context/causality flow */
-  .ctxcard__value { font-size: 18px; }
-
-  /* Step 5 — stack action metrics vertically */
-  .actioncard { padding: 22px 20px 20px; }
-  .actioncard__title { font-size: 19px; }
-  .actioncard__metrics { flex-direction: column; gap: 12px; }
-  .actioncard__metrics div { width: 100%; }
+  /* Step 3 — action card */
+  .actcard__title { font-size: 20px; }
+  .actcard__value strong { font-size: 23px; }
 
   /* Final CTA — stack buttons full-width */
   .finalcta__actions { flex-direction: column; align-items: stretch; }
   .finalcta__actions .btn { width: 100%; justify-content: center; }
-
-  /* 3D relationship space on phones */
-  .kmap { height: 420px; }
-  .kmap__detail { top: auto; bottom: 10px; left: 10px; right: 10px; width: auto; }
-  .kmap__hint { font-size: 11px; padding: 5px 11px; }
-  .kmap__layers { padding: 8px 10px; }
-  .kmap__layer { font-size: 11px; }
 
   .step__name { display: none !important; }
 }

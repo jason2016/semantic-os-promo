@@ -1,48 +1,48 @@
-# Semantic OS — Promo MVP (Relationship-First)
+# Semantic OS — Promo MVP
 
-An interactive promo for **Semantic OS** — the memory layer that stores not just
-documents, but **relationships, context, causality and action feedback**.
+An interactive promo for **Semantic OS**, designed to explain the value in **under 15
+seconds**, even to a non-technical (12-year-old) visitor:
 
-> Semantic OS does not store files. It stores relationships.
+> Most systems store information. **Semantic OS connects information.**
+> Connected information becomes useful action.
 
-**The relationship is the hero.** Traditional knowledge bases store documents;
-knowledge graphs visualize nodes — Semantic OS stores the relationships themselves
-(saved, searchable, reusable and connected to future actions). Knowledge Map AI is
-*only its visualization layer* and appears once, at the final call-to-action.
+The story is deliberately simple — **Information → Connection → Action**. It explains
+the *benefit*, never the architecture: abstract words like *relationship*, *context*
+and *causality* are kept out of the story. The full graph exploration is **not** here —
+it lives in Knowledge Map AI, which is the *destination* this promo leads to.
 
 Styled after [map.clawshow.ai](https://map.clawshow.ai): a calm, light, enterprise
-SaaS interface with soft blue / purple accents and a subtle grid + floating dots.
-Built with plain **HTML + CSS + JavaScript + GSAP**, plus **Three.js** (CDN) for the
-interactive 3D relationship space — no React, no framework, no backend, no build step.
+SaaS interface with soft blue / purple accents, **flowing particle streams**, curved
+paths and glowing motion — a cinematic "AI understanding" feel rather than a graph
+demo. Built with plain **HTML + CSS + JavaScript + GSAP** (incl. **MotionPathPlugin**
+for the particle flow) — no React, no framework, no backend, no build step. (No
+Three.js, no drag/rotate/zoom — this is a story, not a graph playground.)
 
-## The story — 5 steps
+## The story — 4 steps (built around 3 "aha" moments)
 
-A new visitor should leave understanding: Semantic OS stores **relationships**,
-relationships are **searchable**, they accumulate **context**, context reveals
-**causality**, and causality generates **action**.
+**Information → Connection → Understanding → Action.** Storytelling over dashboard:
+each step is a small transformation a 12-year-old can follow, ending in the feeling
+*"AI suddenly understood something I couldn't see."* No 3D graph, no playground
+(that's the destination, Knowledge Map AI).
 
 | # | Step | What it shows |
 |---|------|---------------|
-| 1 | **Chaos** | Emails, notes, visitor lists, pricing requests, meeting notes and conversations drift as scattered files. |
-| 2 | **Structure** | Files become a clean **CSS-Grid** of information sources (Visitor Lists, Partner Emails, Meeting Notes, Pricing Requests, Campaign Notes, Follow-up Notes) — structured memory, no overlap. |
-| 3 | **Relationships** (the hero) | **Relationship records** — each a labeled link between two sources (e.g. *Same Visitor*, *Mentioned Budget*) with **Confidence %** and **Saved · Searchable · Reusable** flags. The relationship itself is the stored object. |
-| 4 | **Context + Causality** | Connected relationships accumulate into meaning: evidence → **Context: High Purchase Intent** → **Causality: pricing request received but no response sent**. |
-| 5 | **Action** | A recommended-action card driven by the relationships — contact within 48h, **€12,000** expected revenue, **63%** probability. |
+| 1 | **Your Information Is Everywhere** | Email, WhatsApp, Meeting Notes, Pricing Request and Visitor List float around — *finding information takes time*. |
+| 2 | **AI Finds The Same Person** | **Glowing particles stream along curved paths** (GSAP MotionPath) from Email, WhatsApp, Meeting Notes and Pricing Request **toward Marie Chen** — information flowing, not a static graph. She pulses and a badge pops: **AI FOUND / 1 PERSON**. Tap her → *Found in ✓ Email ✓ WhatsApp ✓ Meeting Notes ✓ Pricing Request.* *(First wow.)* |
+| 3 | **AI Finds The Opportunity** | A **bright pulse flows** through the chain — *Pricing Request → Budget Discussed → No Follow-Up → Opportunity Detected* — then a giant **💰 €12,000** bursts in (scale 0 → 1.4 → 1.0, radial glow + particles exploding outward), the largest thing on the page: *AI found a missed opportunity.* *(Strongest moment.)* |
+| 4 | **Ask Anything** | A search box **types** *"What should I do next?"*, then the **reasoning lights up step by step (1 → 6)**: Marie Chen → Pricing Request → Budget Discussed → No Follow-Up → €12,000 → Follow Up Today, and the recommendation appears: **Follow up Marie Chen**, **€12,000**. *AI explains why — not random answers.* |
 
-**Final CTA — interactive 3D relationship space (miniature Knowledge Map AI).**
-A real **Three.js** scene the visitor can **drag to rotate, scroll to zoom**, with the
-layers stacked in depth: **Records → Relationships → Context → Actions**. Relationships
-are the hero — first-class, clickable objects: click one to open a detail panel with its
-**Meaning, Evidence, Confidence, Saved · Searchable · Reusable**. It demonstrates
-*records become relationships, relationships become context, context becomes actions.*
+**Step 4 closes with the conversion:**
 
 - Primary: **Explore Relationships in 2D/3D** → <https://map.clawshow.ai> (opens in a new tab)
 - Secondary: **Build Your Semantic OS** → opens a contact modal (see below)
 
+Knowledge Map AI is the destination; Semantic OS is the story.
+
 ## Project structure
 
 ```
-index.html    Markup: stepper, 5 step widgets, final CTA
+index.html    Markup: stepper, 4 step widgets, modal
 styles.css    Light SaaS theme, responsive, CSS-Grid source layout
 app.js        Scene controller + GSAP animations
 README.md     This file

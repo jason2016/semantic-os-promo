@@ -1,17 +1,16 @@
 /* ============================================================
-   Semantic OS — Promo v3
-   One product. 5 simple steps:
-   chaos → organize → relationships → opportunity → action
-   Knowledge Map AI appears only at the final CTA.
-   Pure HTML/CSS/JS + GSAP (CDN). No framework, no backend.
+   Semantic OS — Promo (simple 3-step story for first-time visitors)
+   Messy info  →  AI connects it  →  AI helps me act
+   Knowledge Map AI is the Three.js preview at the final CTA only.
+   Pure HTML/CSS/JS + GSAP; Three.js lazy-loaded for the final preview.
    ============================================================ */
 
 (function () {
   "use strict";
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const MOBILE_Q = window.matchMedia("(max-width: 560px)");
-  const isMobile = () => MOBILE_Q.matches;
+  const hasMotionPath = typeof window.MotionPathPlugin !== "undefined";
+  if (hasMotionPath) gsap.registerPlugin(MotionPathPlugin);
   // first-screen optimizations target everything under 768px (phones + small tablets)
   const SMALL_Q = window.matchMedia("(max-width: 768px)");
   const isSmall = () => SMALL_Q.matches;
@@ -20,104 +19,73 @@
      DATA
      ============================================================ */
 
-  // Scattered information (Step 1)
+  // Step 1 — scattered everyday information (first 5 shown on mobile)
   const FILES = [
-    { name: "Visitor List.xlsx", ico: "📊", color: "#8b5cf6" },
-    { name: "Partner Email.msg", ico: "✉️", color: "#34d399" },
-    { name: "Pricing Request.pdf", ico: "💶", color: "#0ea5e9" },
-    { name: "Meeting Notes.md", ico: "🗒️", color: "#fb7185" },
-    { name: "WhatsApp Conversation", ico: "💬", color: "#34d399" },
-    { name: "Campaign Notes.md", ico: "📝", color: "#a855f7" },
-    { name: "Badge Scans.csv", ico: "📋", color: "#8b5cf6" },
-    { name: "Follow-up Notes.docx", ico: "🗂️", color: "#0ea5e9" },
-    { name: "Booth Plan.pdf", ico: "📐", color: "#fb7185" },
-    { name: "BizMedia Thread", ico: "✉️", color: "#34d399" }
+    { name: "Email", ico: "✉️", color: "#34d399" },
+    { name: "WhatsApp", ico: "💬", color: "#22c55e" },
+    { name: "Meeting Notes", ico: "🗒️", color: "#fb7185" },
+    { name: "Pricing Request", ico: "💶", color: "#0ea5e9" },
+    { name: "Visitor List", ico: "📋", color: "#8b5cf6" },
+    { name: "Invoice.pdf", ico: "📄", color: "#6366f1" },
+    { name: "Contract.pdf", ico: "📃", color: "#a855f7" }
   ];
 
-  // Structured information sources (Step 2) — CSS Grid, each with a clean doc list
-  const SOURCES = [
-    { name: "Visitor Lists", ico: "📋", color: "#8b5cf6", docs: ["Visitor List.xlsx", "Badge Scans.csv"] },
-    { name: "Partner Emails", ico: "✉️", color: "#34d399", docs: ["Partner Email.msg", "BizMedia Thread", "WhatsApp Conversation"] },
-    { name: "Meeting Notes", ico: "🗒️", color: "#fb7185", docs: ["Meeting Notes.md", "Booth Recap"] },
-    { name: "Pricing Requests", ico: "💶", color: "#0ea5e9", docs: ["Pricing Request.pdf", "Quote Draft"] },
-    { name: "Campaign Notes", ico: "📣", color: "#a855f7", docs: ["Campaign Notes.md", "Spring 2026 Brief"] },
-    { name: "Follow-up Notes", ico: "🗂️", color: "#6366f1", docs: ["Follow-up Notes.docx", "Open Items"] }
-  ];
+  // Step 2 — AI pulls scattered sources toward one person (magnet)
+  const CONNECT = {
+    records: [
+      { name: "Email", ico: "✉️", color: "#34d399", x: 0.16, y: 0.26 },
+      { name: "Meeting Notes", ico: "🗒️", color: "#fb7185", x: 0.84, y: 0.26 },
+      { name: "Pricing Request", ico: "💶", color: "#0ea5e9", x: 0.16, y: 0.74 },
+      { name: "WhatsApp", ico: "💬", color: "#22c55e", x: 0.84, y: 0.74 }
+    ]
+  };
 
-  // Step 3 — the HERO: stored relationship records.
-  // Each relationship is the object: a labeled link between two sources, with metadata.
-  const REL_RECORDS = [
-    {
-      label: "Same Visitor", confidence: 92,
-      a: { name: "Visitor List", ico: "📋", color: "#8b5cf6" },
-      b: { name: "Partner Email", ico: "✉️", color: "#34d399" },
-      meaning: "<b>Marie Chen</b> is the same visitor across both records."
-    },
-    {
-      label: "Interested In Product X", confidence: 88,
-      a: { name: "Meeting Notes", ico: "🗒️", color: "#fb7185" },
-      b: { name: "Campaign Notes", ico: "📣", color: "#a855f7" },
-      meaning: "Marie repeatedly references <b>Product X</b>."
-    },
-    {
-      label: "Mentioned Budget", confidence: 84,
-      a: { name: "Meeting Notes", ico: "🗒️", color: "#fb7185" },
-      b: { name: "Pricing Request", ico: "💶", color: "#0ea5e9" },
-      meaning: "A <b>budget range</b> was discussed and recorded."
-    },
-    {
-      label: "Waiting For Follow-up", confidence: 90,
-      a: { name: "Pricing Request", ico: "💶", color: "#0ea5e9" },
-      b: { name: "Follow-up Notes", ico: "🗂️", color: "#6366f1" },
-      meaning: "A pricing request has <b>no response</b> yet."
-    }
+  // Step 3 — chain of events leading to a discovered opportunity
+  const CAUSAL = [
+    { title: "Pricing Request", color: "#0ea5e9" },
+    { title: "Budget Discussed", color: "#8b5cf6" },
+    { title: "No Follow-Up", color: "#fb7185", alert: true },
+    { title: "Opportunity Detected", color: "#f59e0b", risk: true }
   ];
 
   /* ============================================================
      SCENES
      ============================================================ */
-  const STEPS = ["Chaos", "Structure", "Relationships", "Context", "Action"];
+  const STEPS = ["Information", "Connection", "Understanding", "Action"];
 
   const SCENES = [
     {
-      eyebrow: "Step 1 · Chaos",
-      title: "You Have Information Everywhere.",
-      sub: "Emails, notes, visitor lists, pricing requests, meeting notes and conversations are scattered across systems.",
-      msg: "",
+      eyebrow: "Step 1 of 4",
+      title: "Your Information Is Everywhere",
+      sub: "Emails, notes, messages and files are scattered across different systems.",
+      msg: "Finding information takes time.",
       widget: "scatter",
-      primary: { label: "Organize Information →", go: 2 }
+      primary: { label: "Organize My Information →", go: 2 }
     },
     {
-      eyebrow: "Step 2 · Structure",
-      title: "Semantic OS Creates Structured Memory.",
-      sub: "Information sources appear — every document finds its place.",
-      msg: "Documents are no longer isolated. They become part of a structured memory system.",
-      widget: "sources",
-      primary: { label: "Discover Relationships →", go: 3 }
+      eyebrow: "Step 2 of 4",
+      title: "AI Finds The Same Person",
+      sub: "Watch AI pull scattered information toward one person.",
+      msg: "AI connects information automatically.",
+      widget: "connect",
+      primary: { label: "Show Me What Matters →", go: 3 }
     },
     {
-      eyebrow: "Step 3 · Relationships",
-      title: "The Relationship Is the Stored Object.",
-      sub: "Semantic OS saves each relationship — labeled, scored and reusable — not just the documents.",
-      msg: "Semantic OS stores relationships, not just documents.",
-      widget: "relations",
-      primary: { label: "Reveal Context →", go: 4 }
+      eyebrow: "Step 3 of 4",
+      title: "AI Finds The Opportunity",
+      sub: "AI follows the chain of events.",
+      msg: "AI does not just connect information. AI discovers value.",
+      widget: "understand",
+      primary: { label: "What Should I Do Next? →", go: 4 }
     },
     {
-      eyebrow: "Step 4 · Context + Causality",
-      title: "Relationships Become Context.",
-      sub: "Connected relationships accumulate into meaning — and reveal cause and effect.",
-      msg: "Semantic OS connects information into meaning.",
-      widget: "context",
-      primary: { label: "Generate Action →", go: 5 }
-    },
-    {
-      eyebrow: "Step 5 · Action",
-      title: "Turn Relationships Into Action.",
-      sub: "Context becomes a clear, recommended next step — with expected revenue and probability.",
-      msg: "Relationships create context. Context creates action.",
-      widget: "action",
-      primary: { label: "Explore Relationships in 2D/3D ↓", scrollTo: "#explore" }
+      eyebrow: "Step 4 of 4",
+      title: "Ask Anything",
+      sub: "Ask in plain language — AI finds the answer.",
+      msg: "AI does not search documents. AI finds answers.",
+      widget: "act",
+      primary: { label: "Explore Relationships in 2D/3D ↗", href: "https://map.clawshow.ai" },
+      secondary: { label: "Build Your Semantic OS", modal: true }
     }
   ];
 
@@ -137,10 +105,16 @@
   document.querySelectorAll(".widget").forEach((w) => (widgets[w.dataset.w] = w));
 
   const field = $("[data-field]");
-  const sourcesGrid = $("[data-sources]");
-  const relrecsEl = $("[data-relrecs]");
+  const cnEdges = $("[data-cn-edges]");
+  const cnNodes = $("[data-cn-nodes]");
+  const cnPopup = $("[data-cn-popup]");
+  const cnHint = $("[data-cn-hint]");
+  const cnBadge = $("[data-cn-badge]");
+  const causalEl = $("[data-causal]");
+  const moneyEl = $("[data-money]");
 
   const ctaPrimary = $("[data-cta-primary]");
+  const ctaSecondary = $("[data-cta-secondary]");
   const backBtn = $("[data-back]");
   const replayBtn = $("[data-replay-demo]");
   const modal = $("[data-modal]");
@@ -206,12 +180,24 @@
     });
   }
 
+  function ctaAction(spec) {
+    if (!spec) return;
+    if (spec.go) goTo(spec.go - 1);
+    else if (spec.scrollTo) document.querySelector(spec.scrollTo).scrollIntoView({ behavior: "smooth" });
+    else if (spec.href) window.open(spec.href, "_blank", "noopener");
+    else if (spec.modal) openModal();
+  }
+
   function setCTA(s) {
     ctaPrimary.textContent = s.primary.label;
-    ctaPrimary.onclick = () => {
-      if (s.primary.go) goTo(s.primary.go - 1);
-      else if (s.primary.scrollTo) document.querySelector(s.primary.scrollTo).scrollIntoView({ behavior: "smooth" });
-    };
+    ctaPrimary.onclick = () => ctaAction(s.primary);
+    if (s.secondary) {
+      ctaSecondary.hidden = false;
+      ctaSecondary.textContent = s.secondary.label;
+      ctaSecondary.onclick = () => ctaAction(s.secondary);
+    } else {
+      ctaSecondary.hidden = true;
+    }
     backBtn.hidden = current === 0;
   }
 
@@ -227,10 +213,9 @@
     setCTA(s);
 
     if (s.widget === "scatter") enterScatter();
-    else if (s.widget === "sources") enterSources();
-    else if (s.widget === "relations") enterRelations();
-    else if (s.widget === "context") enterContext();
-    else if (s.widget === "action") enterAction();
+    else if (s.widget === "connect") enterConnect();
+    else if (s.widget === "understand") enterUnderstand();
+    else if (s.widget === "act") enterAct();
   }
 
   /* ============================================================
@@ -260,7 +245,7 @@
     killFloat();
     // Fewer floating documents on small screens; keeps Step 1 light and fast.
     const small = isSmall();
-    buildChips(small ? 4 : FILES.length);
+    buildChips(small ? 5 : FILES.length);
     const r = field.getBoundingClientRect();
     // Clamp spread to chip size so nothing drifts off the field (no clipping).
     const cw = chipEls[0] ? chipEls[0].offsetWidth : 170;
@@ -293,124 +278,244 @@
   }
 
   /* ============================================================
-     STEP 2 — information sources (CSS Grid)
+     STEP 2 — AI connects everything (simple graph + popup)
      ============================================================ */
-  function buildSources() {
-    sourcesGrid.innerHTML = "";
-    SOURCES.forEach((s) => {
-      const card = document.createElement("div");
-      card.className = "source-card";
-      card.style.setProperty("--src-color", s.color);
-      const docs = s.docs.map((d) => "<li>" + d + "</li>").join("");
-      card.innerHTML =
-        '<div class="source-card__head">' +
-        '<span class="source-card__ico">' + s.ico + "</span>" +
-        '<span class="source-card__name">' + s.name + "</span>" +
-        '<span class="source-card__count">' + s.docs.length + "</span></div>" +
-        '<ul class="doclist">' + docs + "</ul>";
-      sourcesGrid.appendChild(card);
-    });
+  const SVGNS = "http://www.w3.org/2000/svg";
+  let cnFlowTweens = [];
+  function killCnFlow() { cnFlowTweens.forEach((t) => t.kill()); cnFlowTweens = []; }
+
+  // a curved path record → Marie, with a soft outward bow
+  function curveD(rx, ry, cx, cy, sign) {
+    const mx = (rx + cx) / 2, my = (ry + cy) / 2;
+    const dx = cx - rx, dy = cy - ry;
+    const n = Math.hypot(dx, dy) || 1;
+    const off = 0.22 * n * sign;
+    const ctrlx = mx + (-dy / n) * off;
+    const ctrly = my + (dx / n) * off;
+    return "M" + rx + "," + ry + " Q" + ctrlx + "," + ctrly + " " + cx + "," + cy;
   }
 
-  function enterSources() {
-    killFloat(); // stop step-1 floating
-    if (!sourcesGrid.children.length) buildSources();
-    const cards = Array.from(sourcesGrid.children);
-    const tl = gsap.timeline();
-    tl.fromTo(cards, { opacity: 0, y: 22, scale: 0.96 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.55, stagger: 0.08, ease: "back.out(1.3)" });
-    cards.forEach((card, ci) => {
-      const items = card.querySelectorAll(".doclist li");
-      tl.fromTo(items, { opacity: 0, x: -8 },
-        { opacity: 1, x: 0, duration: 0.3, stagger: 0.06 }, 0.2 + ci * 0.08);
-    });
-  }
-
-  /* ============================================================
-     STEP 3 — relationship records (the stored object)
-     ============================================================ */
-  function relWire(rec) {
-    return (
-      '<div class="relrec__wire">' +
-        '<span class="wirenode" style="--wire-color:' + rec.a.color + '">' +
-          '<span class="wirenode__ico">' + rec.a.ico + '</span>' +
-          '<span class="wirenode__name">' + rec.a.name + '</span>' +
-        '</span>' +
-        '<span class="wire"><span class="wire__label">' + rec.label + '</span></span>' +
-        '<span class="wirenode" style="--wire-color:' + rec.b.color + '">' +
-          '<span class="wirenode__ico">' + rec.b.ico + '</span>' +
-          '<span class="wirenode__name">' + rec.b.name + '</span>' +
-        '</span>' +
-      '</div>'
-    );
-  }
-
-  function enterRelations() {
-    relrecsEl.innerHTML = "";
-    const cards = REL_RECORDS.map((rec) => {
-      const el = document.createElement("article");
-      el.className = "relrec";
-      el.innerHTML =
-        relWire(rec) +
-        '<p class="relrec__meaning">' + rec.meaning + "</p>" +
-        '<div class="relrec__meta">' +
-          '<span class="relrec__conf">Confidence ' + rec.confidence + "%</span>" +
-          '<span class="relrec__flag">Saved</span>' +
-          '<span class="relrec__flag">Searchable</span>' +
-          '<span class="relrec__flag">Reusable</span>' +
-        "</div>";
-      relrecsEl.appendChild(el);
-      return el;
-    });
-    const tl = gsap.timeline();
-    tl.fromTo(cards, { opacity: 0, y: 20, scale: 0.97 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.12, ease: "back.out(1.3)" });
-    // the relationship label "snaps" onto each connecting line
-    cards.forEach((card, i) => {
-      const lbl = card.querySelector(".wire__label");
-      tl.fromTo(lbl, { scale: 0.5, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(2)" }, 0.25 + i * 0.12);
-    });
-  }
-
-  /* ============================================================
-     STEP 4 — context + causality
-     ============================================================ */
-  function enterContext() {
-    const wrap = widgets.context;
-    const chips = wrap.querySelectorAll(".evchip");
-    const arrows = wrap.querySelectorAll(".ctx__arrow");
-    const ctxCard = wrap.querySelector(".ctxcard--context");
-    const causeCard = wrap.querySelector(".ctxcard--causality");
-    const tl = gsap.timeline();
-    tl.fromTo(wrap.querySelector(".ctx__elabel"), { opacity: 0 }, { opacity: 1, duration: 0.3 });
-    tl.fromTo(chips, { opacity: 0, y: 10, scale: 0.9 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.35, stagger: 0.09, ease: "back.out(1.5)" }, "-=0.1");
-    tl.fromTo(arrows[0], { opacity: 0, y: -6 }, { opacity: 1, y: 0, duration: 0.3 }, "+=0.05");
-    tl.fromTo(ctxCard, { opacity: 0, y: 14, scale: 0.96 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.4)" });
-    tl.fromTo(arrows[1], { opacity: 0, y: -6 }, { opacity: 1, y: 0, duration: 0.3 }, "+=0.05");
-    tl.fromTo(causeCard, { opacity: 0, y: 14, scale: 0.96 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.4)" });
-  }
-
-  /* ============================================================
-     STEP 5 — action
-     ============================================================ */
-  let glowTween = null;
-  function enterAction() {
-    const card = $("[data-actioncard]");
-    gsap.fromTo(card, { opacity: 0, y: 18, scale: 0.96 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.4)" });
-    animateNumber($('[data-num="conv"]'), 63, null);
-    animateNumber($('[data-num="arev"]'), 12000, null, true);
-    if (glowTween) glowTween.kill();
-    if (!reduceMotion) {
-      glowTween = gsap.to(card, {
-        boxShadow: "0 24px 60px -16px rgba(20,184,166,0.75), 0 0 0 1px rgba(20,184,166,0.3)",
-        duration: 1.6, ease: "sine.inOut", yoyo: true, repeat: -1
-      });
+  // continuous glowing particles streaming along a curved path (record → Marie)
+  function streamParticles(pathEl, color) {
+    if (reduceMotion || !hasMotionPath) return;
+    const count = isSmall() ? 2 : 3;
+    const dur = 1.9;
+    for (let k = 0; k < count; k++) {
+      const c = document.createElementNS(SVGNS, "circle");
+      c.setAttribute("r", "3");
+      c.setAttribute("class", "cn-particle");
+      if (color) c.style.fill = color;
+      c.style.opacity = "0";
+      cnEdges.appendChild(c);
+      const ptl = gsap.timeline({ repeat: -1, delay: k * (dur / count) });
+      ptl.to(c, { duration: dur, ease: "none", motionPath: { path: pathEl, alignOrigin: [0.5, 0.5] } }, 0);
+      ptl.fromTo(c, { opacity: 0 }, { opacity: 0.95, duration: 0.3, ease: "none" }, 0);
+      ptl.to(c, { opacity: 0, duration: 0.35, ease: "none" }, dur - 0.35);
+      cnFlowTweens.push(ptl);
     }
+  }
+
+  function enterConnect() {
+    killFloat();
+    killCnFlow();
+    cnNodes.innerHTML = "";
+    cnEdges.innerHTML =
+      '<defs><linearGradient id="cnGrad" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="#5b6cff"/><stop offset="1" stop-color="#8b5cf6"/>' +
+      "</linearGradient></defs>";
+    cnPopup.hidden = true;
+    if (cnHint) gsap.set(cnHint, { opacity: 0 });
+    if (cnBadge) { cnBadge.hidden = true; gsap.set(cnBadge, { opacity: 0 }); }
+
+    const rect = widgets.connect.getBoundingClientRect();
+    const w = rect.width, h = rect.height;
+    const cx = w * 0.5, cy = h * 0.46;
+
+    // record nodes — appear softly in place; the flow comes from the particles
+    const recs = CONNECT.records.map((r) => {
+      const el = document.createElement("div");
+      el.className = "cn-node cn-rec";
+      el.style.setProperty("--cn-color", r.color);
+      el.innerHTML =
+        '<span class="cn-rec__dot">' + r.ico + "</span>" +
+        '<span class="cn-node__label">' + r.name + "</span>";
+      cnNodes.appendChild(el);
+      const x = w * r.x, y = h * r.y;
+      gsap.set(el, { left: x, top: y, xPercent: -50, yPercent: -50, opacity: 0, scale: 0.6 });
+      return { el, x, y };
+    });
+
+    // center node (clickable)
+    const center = document.createElement("button");
+    center.type = "button";
+    center.className = "cn-node cn-center";
+    center.innerHTML =
+      '<span class="cn-center__avatar">MC</span>' +
+      '<span class="cn-node__label cn-center__label">Marie Chen</span>';
+    cnNodes.appendChild(center);
+    gsap.set(center, { left: cx, top: cy, xPercent: -50, yPercent: -50, opacity: 0, scale: 0.4 });
+    center.addEventListener("click", showConnectPopup);
+
+    // soft curved paths (the stream beds)
+    const paths = recs.map((r, i) => {
+      const p = document.createElementNS(SVGNS, "path");
+      p.setAttribute("d", curveD(r.x, r.y, cx, cy, i % 2 ? 1 : -1));
+      p.setAttribute("class", "cn-flow");
+      p.style.opacity = "0";
+      cnEdges.appendChild(p);
+      return p;
+    });
+
+    const tl = gsap.timeline();
+    tl.to(center, { opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.7)" });
+    tl.to(recs.map((r) => r.el), { opacity: 1, scale: 1, duration: 0.45, stagger: 0.07, ease: "back.out(1.5)" }, "-=0.15");
+    paths.forEach((p) => {
+      const len = p.getTotalLength ? p.getTotalLength() : 240;
+      gsap.set(p, { strokeDasharray: len, strokeDashoffset: len, opacity: 1 });
+      tl.to(p, { strokeDashoffset: 0, duration: 0.5, ease: "power2.out" }, "<");
+    });
+    // start the streams — information flowing toward Marie
+    tl.add(() => { paths.forEach((p, i) => streamParticles(p, CONNECT.records[i].color)); }, ">-0.2");
+
+    // ~2s in: all particles converging → Marie pulses, badge appears
+    tl.to(center, { scale: 1.22, duration: 0.28, ease: "power2.out" }, "+=0.7");
+    tl.to(center, { scale: 1, duration: 0.32, ease: "power2.inOut" });
+    tl.add(() => { if (cnBadge) cnBadge.hidden = false; }, "<");
+    if (cnBadge) {
+      tl.fromTo(cnBadge, { opacity: 0, scale: 0.6, y: 8 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.5, ease: "back.out(1.9)" }, "<");
+    }
+
+    if (cnHint && !reduceMotion) {
+      tl.to(cnHint, { opacity: 1, duration: 0.4 }, ">+0.15");
+      cnHintPulse = gsap.to(center, { scale: 1.06, duration: 0.9, ease: "sine.inOut", yoyo: true, repeat: -1 });
+    }
+  }
+
+  let cnHintPulse = null;
+  function showConnectPopup() {
+    if (cnHintPulse) { cnHintPulse.kill(); cnHintPulse = null; }
+    if (cnHint) gsap.to(cnHint, { opacity: 0, duration: 0.25 });
+    cnPopup.hidden = false;
+    gsap.fromTo(cnPopup, { opacity: 0, y: 12, scale: 0.94 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.5)" });
+    const items = cnPopup.querySelectorAll(".cn-popup__list li");
+    gsap.fromTo(items, { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.3, stagger: 0.1, delay: 0.15 });
+  }
+  function hideConnectPopup() { cnPopup.hidden = true; }
+
+  /* ============================================================
+     STEP 3 — AI finds the opportunity (flow → €12,000 reveal)
+     ============================================================ */
+  let causalFlow = null;
+  function killCausalFlow() { if (causalFlow) { causalFlow.kill(); causalFlow = null; } }
+
+  function enterUnderstand() {
+    killFloat();
+    killCausalFlow();
+    causalEl.innerHTML = "";
+    if (moneyEl) {
+      moneyEl.hidden = true;
+      gsap.set(moneyEl, { opacity: 0 });
+      moneyEl.querySelectorAll(".money__spark").forEach((s) => s.remove());
+    }
+
+    // build flowing chain: node → animated connector → node → ...
+    const nodes = [], conns = [];
+    CAUSAL.forEach((c, i) => {
+      if (i > 0) {
+        const f = document.createElement("div");
+        f.className = "causal__flow";
+        f.innerHTML = '<span class="causal__spark"></span>';
+        causalEl.appendChild(f);
+        conns.push(f);
+      }
+      const el = document.createElement("div");
+      el.className = "causal__node" + (c.risk ? " causal__node--risk" : c.alert ? " causal__node--alert" : "");
+      el.style.setProperty("--cz-color", c.color);
+      el.innerHTML = '<span class="causal__title">' + c.title + "</span>";
+      causalEl.appendChild(el);
+      nodes.push(el);
+    });
+
+    const tl = gsap.timeline();
+    // everything fades in
+    tl.fromTo([].concat(nodes, conns), { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: 0.3, stagger: 0.05, ease: "power2.out" });
+    // a bright pulse travels through the chain
+    nodes.forEach((n, i) => {
+      tl.to(n, { boxShadow: "0 0 0 4px rgba(91,108,255,0.22)", duration: 0.16, yoyo: true, repeat: 1, ease: "sine.inOut" },
+        i === 0 ? ">" : "+=0.02");
+      if (conns[i] && !reduceMotion) {
+        const spark = conns[i].querySelector(".causal__spark");
+        tl.fromTo(spark, { top: "0%", opacity: 1 }, { top: "100%", opacity: 1, duration: 0.22, ease: "power1.in" }, "<0.05");
+      }
+    });
+
+    // 💰 huge reveal: scale 0 → 1.4 → 1, glow burst, particles explode outward
+    tl.add(() => { if (moneyEl) moneyEl.hidden = false; }, ">+0.05");
+    if (moneyEl) {
+      const v = moneyEl.querySelector(".money__value");
+      const glow = moneyEl.querySelector(".money__glow");
+      tl.fromTo(moneyEl, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1.4, duration: 0.45, ease: "power2.out" }, ">");
+      if (glow) tl.fromTo(glow, { opacity: 0.9, scale: 0.2 }, { opacity: 0, scale: 2.4, duration: 0.7, ease: "power2.out" }, "<");
+      tl.add(() => burstParticles(moneyEl), "<0.05");
+      tl.to(moneyEl, { scale: 1, duration: 0.35, ease: "power2.inOut" });
+      tl.add(() => v.classList.add("is-glow"), "<");
+      tl.add(() => v.classList.remove("is-glow"), ">+0.55");
+      if (!reduceMotion) {
+        causalFlow = gsap.to(v, { scale: 1.04, duration: 0.95, ease: "sine.inOut", yoyo: true, repeat: -1, transformOrigin: "center" });
+      }
+    }
+  }
+
+  function burstParticles(host) {
+    if (reduceMotion) return;
+    for (let i = 0; i < 10; i++) {
+      const s = document.createElement("span");
+      s.className = "money__spark";
+      host.appendChild(s);
+      const ang = (i / 10) * Math.PI * 2;
+      gsap.fromTo(s, { x: 0, y: 0, opacity: 1, scale: 1 },
+        { x: Math.cos(ang) * (60 + Math.random() * 40), y: Math.sin(ang) * (50 + Math.random() * 30),
+          opacity: 0, scale: 0.4, duration: 0.8, ease: "power2.out",
+          onComplete: () => s.remove() });
+    }
+  }
+
+  /* ============================================================
+     STEP 4 — Ask anything (typed question → reasoning path → answer)
+     ============================================================ */
+  function enterAct() {
+    killFloat();
+    const wrap = widgets.act;
+    const bar = wrap.querySelector(".ask__bar");
+    const qEl = wrap.querySelector(".ask__q");
+    const steps = wrap.querySelectorAll(".ask__step");
+    const card = wrap.querySelector(".actcard");
+    const reasons = wrap.querySelectorAll(".actcard__reasons li");
+
+    steps.forEach((s) => s.classList.remove("is-lit"));
+    const Q = "What should I do next?";
+    qEl.textContent = "";
+    qEl.classList.add("is-typing");
+    const typer = { n: 0 };
+
+    const tl = gsap.timeline();
+    tl.fromTo(bar, { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" });
+    // the question types itself
+    tl.to(typer, { n: Q.length, duration: 0.8, ease: "none",
+      onUpdate: () => { qEl.textContent = Q.slice(0, Math.round(typer.n)); },
+      onComplete: () => qEl.classList.remove("is-typing") }, ">");
+    // the reasoning lights up one step at a time (1 → 6)
+    tl.fromTo(steps, { opacity: 0.35, y: 6 }, { opacity: 1, y: 0, duration: 0.2, stagger: 0.07, ease: "power2.out" }, ">+0.1");
+    steps.forEach((s, i) => tl.add(() => s.classList.add("is-lit"), i === 0 ? ">" : "+=0.16"));
+    // then the recommendation, now that the "why" is visible
+    tl.fromTo(card, { opacity: 0, y: 16, scale: 0.97 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.3)" }, ">+0.1");
+    tl.fromTo(reasons, { opacity: 0, x: -8 },
+      { opacity: 1, x: 0, duration: 0.3, stagger: 0.09 }, "-=0.1");
+    animateNumber($('[data-num="value"]'), 12000, null, true);
   }
 
   /* ============================================================
@@ -433,7 +538,9 @@
      REPLAY — restart the whole journey without a refresh
      ============================================================ */
   function replayDemo() {
-    if (glowTween) { glowTween.kill(); glowTween = null; }
+    if (cnHintPulse) { cnHintPulse.kill(); cnHintPulse = null; }
+    killCnFlow();
+    killCausalFlow();
     killFloat();
     // rebuild step-1 chips so they animate in fresh
     buildChips();
@@ -483,331 +590,6 @@
     }
   }
 
-  /* ============================================================
-     KNOWLEDGE MAP AI — interactive 3D relationship space (Three.js)
-     Layers: Records → Relationships → Context → Actions.
-     Relationships are the hero: first-class, clickable objects.
-     ============================================================ */
-  const KMAP_RECORDS = [
-    { name: "Visitor List" }, { name: "Partner Email" }, { name: "Meeting Notes" },
-    { name: "Pricing Request" }, { name: "Campaign Notes" }, { name: "Follow-up Notes" }
-  ];
-  const KMAP_RELS = [
-    { label: "Same Visitor", a: 0, b: 1, conf: 92, meaning: "Marie Chen is the same visitor across both records.", evidence: "Visitor List + Partner Email" },
-    { label: "Interested In Product X", a: 2, b: 4, conf: 88, meaning: "Marie repeatedly references Product X.", evidence: "Meeting Notes + Campaign Notes" },
-    { label: "Mentioned Budget", a: 2, b: 3, conf: 84, meaning: "A budget range was discussed and recorded.", evidence: "Meeting Notes + Pricing Request" },
-    { label: "Waiting For Follow-up", a: 3, b: 5, conf: 90, meaning: "A pricing request has no response yet.", evidence: "Pricing Request + Follow-up Notes" }
-  ];
-  // Mobile: fewer nodes (4 records, 3 relationships) — indices into the first 4 records
-  const KMAP_RELS_MOBILE = [
-    { label: "Same Visitor", a: 0, b: 1, conf: 92, meaning: "Marie Chen is the same visitor across both records.", evidence: "Visitor List + Partner Email" },
-    { label: "Mentioned Budget", a: 2, b: 3, conf: 84, meaning: "A budget range was discussed and recorded.", evidence: "Meeting Notes + Pricing Request" },
-    { label: "Waiting For Follow-up", a: 1, b: 3, conf: 90, meaning: "A pricing request has no response yet.", evidence: "Partner Email + Pricing Request" }
-  ];
-  const C_RECORD = "#8b5cf6", C_REL = "#5b6cff", C_CTX = "#0ea5e9", C_ACT = "#14b8a6";
-
-  const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js";
-  const ORBIT_URL = "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js";
-  function loadScript(src) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = src; s.async = true;
-      s.onload = resolve; s.onerror = () => reject(new Error("failed " + src));
-      document.head.appendChild(s);
-    });
-  }
-  function ensureThree() {
-    return (window.THREE ? Promise.resolve() : loadScript(THREE_URL))
-      .then(() => (window.THREE && THREE.OrbitControls ? Promise.resolve() : loadScript(ORBIT_URL)));
-  }
-
-  // Lazy entry point: only load Three.js + build the scene once the final CTA
-  // is about to enter view, so it never delays the first screen.
-  function initKmap() {
-    const mount = $("[data-kmap-canvas]");
-    const kmapEl = $("[data-kmap]");
-    if (!mount) return;
-    let booted = false;
-    function boot() {
-      if (booted) return;
-      booted = true;
-      ensureThree().then(() => buildKmap(mount, kmapEl)).catch(() => {
-        mount.innerHTML = '<div class="kmap__fallback">3D view needs an internet connection to load.</div>';
-      });
-    }
-    // Defer the actual load to idle time so the Three.js download/parse never
-    // competes with the first screen's paint.
-    function schedule() {
-      const idle = window.requestIdleCallback || function (f) { return setTimeout(f, 400); };
-      idle(boot, { timeout: 3000 });
-    }
-    if ("IntersectionObserver" in window) {
-      const io = new IntersectionObserver((ents) => {
-        if (ents[0].isIntersecting) { io.disconnect(); schedule(); }
-      }, { rootMargin: "120px" });
-      io.observe(kmapEl);
-    } else {
-      schedule();
-    }
-  }
-
-  function buildKmap(mount, kmapEl) {
-    const W0 = kmapEl.clientWidth || 800, H0 = kmapEl.clientHeight || 440;
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(42, W0 / H0, 0.1, 1000);
-    // angled, pulled-back view so the layered depth reads clearly (not a flat cluster)
-    camera.position.set(26, 16, 62);
-
-    let renderer;
-    try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    } catch (err) {
-      mount.innerHTML = '<div class="kmap__fallback">Your browser could not start the 3D view.</div>';
-      return;
-    }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(W0, H0);
-    mount.appendChild(renderer.domElement);
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.95));
-    const dir = new THREE.DirectionalLight(0xffffff, 0.45);
-    dir.position.set(18, 40, 28);
-    scene.add(dir);
-
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    controls.rotateSpeed = 0.7;
-    controls.minDistance = 44;
-    controls.maxDistance = 130;
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 0.6;
-    controls.target.set(0, -1, 0);
-
-    const hintEl = $("[data-kmap-hint]");
-    controls.addEventListener("start", () => {
-      controls.autoRotate = false;
-      if (hintEl) gsap.to(hintEl, { opacity: 0.35, duration: 0.4 });
-    });
-
-    // ----- helpers -----
-    function nodeMesh(radius, hex, emissive) {
-      return new THREE.Mesh(
-        new THREE.SphereGeometry(radius, 32, 32),
-        new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: emissive, roughness: 0.5, metalness: 0.0 })
-      );
-    }
-    function tube(p1, p2, hex, radius, opacity) {
-      const mid = p1.clone().lerp(p2, 0.5);
-      mid.x *= 1.12; mid.z *= 1.12; // gentle outward bow
-      const curve = new THREE.QuadraticBezierCurve3(p1, mid, p2);
-      const geo = new THREE.TubeGeometry(curve, 24, radius, 8, false);
-      const mat = new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: opacity });
-      return new THREE.Mesh(geo, mat);
-    }
-    function makeLabel(text, hex, opts) {
-      opts = opts || {};
-      const dpr = 2, font = 42, padX = 22, padY = 14;
-      const c = document.createElement("canvas");
-      const ctx = c.getContext("2d");
-      ctx.font = "700 " + font + "px Inter, sans-serif";
-      const tw = Math.ceil(ctx.measureText(text).width);
-      c.width = (tw + padX * 2) * dpr;
-      c.height = (font + padY * 2) * dpr;
-      ctx.scale(dpr, dpr);
-      ctx.font = "700 " + font + "px Inter, sans-serif";
-      ctx.textBaseline = "middle";
-      const w = tw + padX * 2, h = font + padY * 2, r = h / 2;
-      if (opts.pill) {
-        ctx.fillStyle = hex;
-        ctx.beginPath();
-        ctx.moveTo(r, 0); ctx.arcTo(w, 0, w, h, r); ctx.arcTo(w, h, 0, h, r);
-        ctx.arcTo(0, h, 0, 0, r); ctx.arcTo(0, 0, w, 0, r); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = "#ffffff";
-      } else {
-        ctx.fillStyle = hex;
-      }
-      ctx.fillText(text, padX, h / 2 + 1);
-      const tex = new THREE.CanvasTexture(c);
-      tex.minFilter = THREE.LinearFilter; tex.anisotropy = 4;
-      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
-      const sH = opts.scale || 1.5, aspect = c.width / c.height;
-      sp.scale.set(sH * aspect, sH, 1);
-      sp.renderOrder = 20;
-      return sp;
-    }
-
-    // ----- layout (vertical layers, widely spaced for clarity) -----
-    const Y_REC = 20, Y_REL = 6, Y_CTX = -8, Y_ACT = -20;
-
-    const graph = new THREE.Group();
-    scene.add(graph);
-    const detail = $("[data-kmap-detail]");
-    const dClose = $("[data-kmap-detail-close]");
-
-    let pickables = [];      // objects that select a relationship
-    let relGroups = [];      // per-relationship { puck, label, tubes[] }
-    let recordNodes = [];    // { mesh, label } — labels shown on hover only
-    let curRels = [];
-    let builtMobile = null;
-
-    function disposeObj(o) {
-      if (o.geometry) o.geometry.dispose();
-      if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
-    }
-    function clearGraph() {
-      while (graph.children.length) { const o = graph.children.pop(); disposeObj(o); }
-    }
-
-    function setSelection(idx) {
-      relGroups.forEach((g, i) => {
-        const on = idx < 0 || i === idx;
-        gsap.to(g.puck.scale, { x: i === idx ? 1.35 : 1, y: i === idx ? 1.35 : 1, z: i === idx ? 1.35 : 1, duration: 0.3, ease: "back.out(2)" });
-        g.puck.material.emissiveIntensity = i === idx ? 0.85 : (idx < 0 ? 0.6 : 0.28);
-        g.label.material.opacity = on ? 1 : 0.22;
-        g.tubes.forEach((t) => { t.material.opacity = on ? (i === idx ? 0.9 : 0.5) : 0.1; });
-      });
-    }
-
-    function build() {
-      clearGraph();
-      pickables = []; relGroups = []; recordNodes = [];
-      const mobile = isMobile();
-      builtMobile = mobile;
-      const records = mobile ? KMAP_RECORDS.slice(0, 4) : KMAP_RECORDS;
-      curRels = mobile ? KMAP_RELS_MOBILE : KMAP_RELS;
-      const R = mobile ? 12 : 15;
-
-      const recPos = records.map((_, i) => {
-        const a = (i / records.length) * Math.PI * 2 - Math.PI / 2;
-        return new THREE.Vector3(Math.cos(a) * R, Y_REC, Math.sin(a) * R);
-      });
-      const ctxPos = new THREE.Vector3(0, Y_CTX, 0);
-      const actPos = new THREE.Vector3(0, Y_ACT, 0);
-
-      // records — small; labels hidden until hover
-      recPos.forEach((p, i) => {
-        const m = nodeMesh(0.75, C_RECORD, 0.3);
-        m.position.copy(p); m.userData.rec = i; graph.add(m);
-        const lbl = makeLabel(records[i].name, "#3a2d6b", { scale: 1.25 });
-        lbl.position.copy(p); lbl.position.y += 1.9; lbl.visible = false; graph.add(lbl);
-        recordNodes.push({ mesh: m, label: lbl });
-      });
-
-      // context (medium-small) + action (medium)
-      const ctxMesh = nodeMesh(1.05, C_CTX, 0.45); ctxMesh.position.copy(ctxPos); graph.add(ctxMesh);
-      const ctxLbl = makeLabel("Context · High Purchase Intent", C_CTX, { pill: true, scale: 1.45 });
-      ctxLbl.position.copy(ctxPos); ctxLbl.position.y -= 2.5; graph.add(ctxLbl);
-
-      const actMesh = nodeMesh(1.3, C_ACT, 0.5); actMesh.position.copy(actPos); graph.add(actMesh);
-      const actLbl = makeLabel("Action · Contact within 48h", C_ACT, { pill: true, scale: 1.45 });
-      actLbl.position.copy(actPos); actLbl.position.y -= 2.8; graph.add(actLbl);
-
-      graph.add(tube(ctxPos, actPos, C_CTX, 0.08, 0.5));
-
-      // relationships — the hero (medium), always labelled
-      curRels.forEach((rel, i) => {
-        const pa = recPos[rel.a], pb = recPos[rel.b];
-        const puckPos = pa.clone().add(pb).multiplyScalar(0.5 * 0.6); // midpoint pulled inward
-        puckPos.y = Y_REL;
-        const puck = nodeMesh(1.4, C_REL, 0.6);
-        puck.position.copy(puckPos); puck.userData.rel = i; graph.add(puck); pickables.push(puck);
-
-        const lbl = makeLabel(rel.label, C_REL, { pill: true, scale: 1.55 });
-        lbl.position.copy(puckPos); lbl.position.y += 2.7; graph.add(lbl);
-
-        const tubes = [];
-        const t1 = tube(pa, puckPos, C_REL, 0.09, 0.55); t1.userData.rel = i; graph.add(t1); tubes.push(t1); pickables.push(t1);
-        const t2 = tube(pb, puckPos, C_REL, 0.09, 0.55); t2.userData.rel = i; graph.add(t2); tubes.push(t2); pickables.push(t2);
-        const t3 = tube(puckPos, ctxPos, C_CTX, 0.08, 0.45); t3.userData.rel = i; graph.add(t3); tubes.push(t3);
-
-        relGroups.push({ puck, label: lbl, tubes });
-      });
-
-      setSelection(-1);
-    }
-
-    // ----- detail panel -----
-    function openDetail(idx) {
-      const rel = curRels[idx];
-      if (!rel) return;
-      $("[data-d-label]").textContent = rel.label;
-      $("[data-d-meaning]").textContent = rel.meaning;
-      $("[data-d-evidence]").textContent = rel.evidence;
-      $("[data-d-confidence]").textContent = rel.conf + "%";
-      detail.hidden = false;
-      gsap.fromTo(detail, { opacity: 0, x: 14 }, { opacity: 1, x: 0, duration: 0.35, ease: "power2.out" });
-      setSelection(idx);
-    }
-    function closeDetail() { detail.hidden = true; setSelection(-1); }
-    if (dClose) dClose.addEventListener("click", closeDetail);
-
-    // ----- raycast click + hover -----
-    const ray = new THREE.Raycaster();
-    const ndc = new THREE.Vector2();
-    let down = null;
-    function pointerNDC(e) {
-      const r = renderer.domElement.getBoundingClientRect();
-      ndc.x = ((e.clientX - r.left) / r.width) * 2 - 1;
-      ndc.y = -((e.clientY - r.top) / r.height) * 2 + 1;
-    }
-    function pickRel() {
-      ray.setFromCamera(ndc, camera);
-      const hits = ray.intersectObjects(pickables, false);
-      return hits.length ? hits[0].object.userData.rel : -1;
-    }
-    function pickRecord() {
-      ray.setFromCamera(ndc, camera);
-      const hits = ray.intersectObjects(recordNodes.map((r) => r.mesh), false);
-      return hits.length ? hits[0].object.userData.rec : -1;
-    }
-    function hoverRecord(idx) { recordNodes.forEach((r, i) => { r.label.visible = i === idx; }); }
-
-    renderer.domElement.addEventListener("pointerdown", (e) => { down = { x: e.clientX, y: e.clientY, t: Date.now() }; });
-    renderer.domElement.addEventListener("pointerup", (e) => {
-      if (!down) return;
-      const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
-      const quick = Date.now() - down.t < 450;
-      down = null;
-      if (moved > 6 || !quick) return; // drag, not click
-      pointerNDC(e);
-      const idx = pickRel();
-      if (idx >= 0) openDetail(idx);
-      else closeDetail();
-    });
-    renderer.domElement.addEventListener("pointermove", (e) => {
-      pointerNDC(e);
-      const rel = pickRel();
-      renderer.domElement.style.cursor = rel >= 0 ? "pointer" : "";
-      hoverRecord(rel >= 0 ? -1 : pickRecord()); // record labels only on hover
-    });
-    renderer.domElement.addEventListener("pointerleave", () => hoverRecord(-1));
-
-    // ----- render loop (paused when offscreen) -----
-    let raf = null;
-    function loop() { controls.update(); renderer.render(scene, camera); raf = requestAnimationFrame(loop); }
-    function startLoop() { if (!raf) loop(); }
-    function stopLoop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
-    if ("IntersectionObserver" in window) {
-      new IntersectionObserver((ents) => { ents[0].isIntersecting ? startLoop() : stopLoop(); }, { threshold: 0.05 })
-        .observe(kmapEl);
-    } else { startLoop(); }
-
-    window.addEventListener("resize", () => {
-      const w = kmapEl.clientWidth, h = kmapEl.clientHeight;
-      if (!w || !h) return;
-      camera.aspect = w / h; camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-      if (isMobile() !== builtMobile) { closeDetail(); build(); } // fewer nodes on mobile
-    });
-
-    build();
-
-    // test-only handle (off in production unless explicitly enabled)
-    if (window.__KMAP_TEST__) {
-      kmapEl._kmap = { camera, controls, renderer, get pucks() { return relGroups.map((g) => g.puck); }, get records() { return recordNodes; }, open: openDetail, close: closeDetail };
-    }
-  }
 
   /* ============================================================
      INIT + RESIZE
@@ -815,18 +597,20 @@
   function init() {
     buildStepper();
     buildChips();
-    buildSources();
     backBtn.addEventListener("click", () => goTo(current - 1));
     replayBtn.addEventListener("click", replayDemo);
 
-    // modal wiring
+    // Step 2 popup close
+    const cnClose = $("[data-cn-popup-close]");
+    if (cnClose) cnClose.addEventListener("click", hideConnectPopup);
+
+    // modal wiring (the Step 4 secondary CTA opens it via setCTA)
     document.querySelectorAll("[data-open-modal]").forEach((b) => b.addEventListener("click", openModal));
     modal.querySelectorAll("[data-modal-close]").forEach((b) => b.addEventListener("click", closeModal));
     modal.querySelector("[data-copy-email]").addEventListener("click", copyEmail);
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !modal.hidden) closeModal(); });
 
     goTo(0);
-    initKmap();
 
     let raf;
     window.addEventListener("resize", () => {
@@ -834,7 +618,7 @@
       raf = requestAnimationFrame(() => {
         const w = SCENES[current].widget;
         if (w === "scatter") enterScatter();
-        else if (w === "relations") enterRelations();
+        else if (w === "connect") enterConnect();
       });
     });
   }
