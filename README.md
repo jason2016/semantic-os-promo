@@ -11,12 +11,13 @@ the *benefit*, never the architecture: abstract words like *relationship*, *cont
 and *causality* are kept out of the story. The full graph exploration is **not** here —
 it lives in Knowledge Map AI, which is the *destination* this promo leads to.
 
-Styled after [map.clawshow.ai](https://map.clawshow.ai): a calm, light, enterprise
-SaaS interface with soft blue / purple accents, **flowing particle streams**, curved
-paths and glowing motion — a cinematic "AI understanding" feel rather than a graph
-demo. Built with plain **HTML + CSS + JavaScript + GSAP** (incl. **MotionPathPlugin**
-for the particle flow) — no React, no framework, no backend, no build step. (No
-Three.js, no drag/rotate/zoom — this is a story, not a graph playground.)
+A cinematic, **alive** experience (think Apple keynote × Linear × Arc): soft blue /
+purple gradients, **floating light dust**, flowing particle streams along curved paths,
+glowing motion and dramatic reveals — not a dashboard or graph database. Built with
+plain **HTML + CSS + JavaScript + GSAP** (incl. **MotionPathPlugin** for the particle
+flow) — no React, no framework, no backend, no build step. (No Three.js, no canvas, no
+drag/rotate/zoom — this is a story that sells the value; the real graph lives at
+map.clawshow.ai.)
 
 ## The story — 4 steps (built around 3 "aha" moments)
 

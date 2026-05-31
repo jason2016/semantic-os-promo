@@ -331,6 +331,9 @@
     const w = rect.width, h = rect.height;
     const cx = w * 0.5, cy = h * 0.46;
 
+    const cnBloom = $("[data-cn-bloom]");
+    if (cnBloom) gsap.set(cnBloom, { left: cx, top: cy, xPercent: -50, yPercent: -50, opacity: 0, scale: 0.4 });
+
     // record nodes — appear softly in place; the flow comes from the particles
     const recs = CONNECT.records.map((r) => {
       const el = document.createElement("div");
@@ -377,8 +380,12 @@
     // start the streams — information flowing toward Marie
     tl.add(() => { paths.forEach((p, i) => streamParticles(p, CONNECT.records[i].color)); }, ">-0.2");
 
-    // ~2s in: all particles converging → Marie pulses, badge appears
-    tl.to(center, { scale: 1.22, duration: 0.28, ease: "power2.out" }, "+=0.7");
+    // ~2s in: all particles converging → background blooms, Marie pulses, badge appears
+    if (cnBloom) {
+      tl.fromTo(cnBloom, { opacity: 0, scale: 0.4 }, { opacity: 0.85, scale: 1.7, duration: 0.5, ease: "power2.out" }, "+=0.7");
+      tl.to(cnBloom, { opacity: 0, scale: 2, duration: 0.7, ease: "power2.out" }, ">-0.1");
+    }
+    tl.to(center, { scale: 1.22, duration: 0.28, ease: "power2.out" }, cnBloom ? "<" : "+=0.7");
     tl.to(center, { scale: 1, duration: 0.32, ease: "power2.inOut" });
     tl.add(() => { if (cnBadge) cnBadge.hidden = false; }, "<");
     if (cnBadge) {
@@ -414,6 +421,8 @@
     killFloat();
     killCausalFlow();
     causalEl.innerHTML = "";
+    const flashEl = $("[data-understand-flash]");
+    if (flashEl) gsap.set(flashEl, { opacity: 0 });
     if (moneyEl) {
       moneyEl.hidden = true;
       gsap.set(moneyEl, { opacity: 0 });
@@ -452,17 +461,20 @@
       }
     });
 
-    // 💰 huge reveal: scale 0 → 1.4 → 1, glow burst, particles explode outward
+    // 💰 huge reveal: screen glow + light bloom + particle burst + scale 0 → 1.4 → 1
+    const flash = $("[data-understand-flash]");
     tl.add(() => { if (moneyEl) moneyEl.hidden = false; }, ">+0.05");
     if (moneyEl) {
       const v = moneyEl.querySelector(".money__value");
       const glow = moneyEl.querySelector(".money__glow");
-      tl.fromTo(moneyEl, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1.4, duration: 0.45, ease: "power2.out" }, ">");
-      if (glow) tl.fromTo(glow, { opacity: 0.9, scale: 0.2 }, { opacity: 0, scale: 2.4, duration: 0.7, ease: "power2.out" }, "<");
-      tl.add(() => burstParticles(moneyEl), "<0.05");
+      if (flash) tl.fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "power2.out" }, ">");
+      tl.fromTo(moneyEl, { opacity: 0, scale: 0 }, { opacity: 1, scale: 1.4, duration: 0.45, ease: "power2.out" }, "<");
+      if (glow) tl.fromTo(glow, { opacity: 0.95, scale: 0.2 }, { opacity: 0, scale: 2.6, duration: 0.8, ease: "power2.out" }, "<");
+      if (flash) tl.to(flash, { opacity: 0, duration: 0.75, ease: "power2.out" }, "<0.16");
+      tl.add(() => burstParticles(moneyEl), "<");
       tl.to(moneyEl, { scale: 1, duration: 0.35, ease: "power2.inOut" });
       tl.add(() => v.classList.add("is-glow"), "<");
-      tl.add(() => v.classList.remove("is-glow"), ">+0.55");
+      tl.add(() => v.classList.remove("is-glow"), ">+0.6");
       if (!reduceMotion) {
         causalFlow = gsap.to(v, { scale: 1.04, duration: 0.95, ease: "sine.inOut", yoyo: true, repeat: -1, transformOrigin: "center" });
       }
@@ -471,14 +483,16 @@
 
   function burstParticles(host) {
     if (reduceMotion) return;
-    for (let i = 0; i < 10; i++) {
+    const N = 14;
+    for (let i = 0; i < N; i++) {
       const s = document.createElement("span");
       s.className = "money__spark";
       host.appendChild(s);
-      const ang = (i / 10) * Math.PI * 2;
-      gsap.fromTo(s, { x: 0, y: 0, opacity: 1, scale: 1 },
-        { x: Math.cos(ang) * (60 + Math.random() * 40), y: Math.sin(ang) * (50 + Math.random() * 30),
-          opacity: 0, scale: 0.4, duration: 0.8, ease: "power2.out",
+      gsap.set(s, { xPercent: -50, yPercent: -50 });
+      const ang = (i / N) * Math.PI * 2 + Math.random() * 0.3;
+      gsap.fromTo(s, { x: 0, y: 0, opacity: 1, scale: 1.2 },
+        { x: Math.cos(ang) * (80 + Math.random() * 60), y: Math.sin(ang) * (64 + Math.random() * 44),
+          opacity: 0, scale: 0.3, duration: 0.9, ease: "power2.out",
           onComplete: () => s.remove() });
     }
   }
@@ -491,11 +505,13 @@
     const wrap = widgets.act;
     const bar = wrap.querySelector(".ask__bar");
     const qEl = wrap.querySelector(".ask__q");
+    const thinking = wrap.querySelector("[data-ask-thinking]");
     const steps = wrap.querySelectorAll(".ask__step");
     const card = wrap.querySelector(".actcard");
     const reasons = wrap.querySelectorAll(".actcard__reasons li");
 
     steps.forEach((s) => s.classList.remove("is-lit"));
+    if (thinking) thinking.hidden = true;
     const Q = "What should I do next?";
     qEl.textContent = "";
     qEl.classList.add("is-typing");
@@ -507,15 +523,44 @@
     tl.to(typer, { n: Q.length, duration: 0.8, ease: "none",
       onUpdate: () => { qEl.textContent = Q.slice(0, Math.round(typer.n)); },
       onComplete: () => qEl.classList.remove("is-typing") }, ">");
+    // "AI is reasoning…" while the chain lights up
+    if (thinking) {
+      tl.add(() => { thinking.hidden = false; }, ">");
+      tl.fromTo(thinking, { opacity: 0 }, { opacity: 1, duration: 0.25 }, "<");
+    }
     // the reasoning lights up one step at a time (1 → 6)
-    tl.fromTo(steps, { opacity: 0.35, y: 6 }, { opacity: 1, y: 0, duration: 0.2, stagger: 0.07, ease: "power2.out" }, ">+0.1");
+    tl.fromTo(steps, { opacity: 0.35, y: 6 }, { opacity: 1, y: 0, duration: 0.2, stagger: 0.07, ease: "power2.out" }, ">+0.05");
     steps.forEach((s, i) => tl.add(() => s.classList.add("is-lit"), i === 0 ? ">" : "+=0.16"));
+    // reasoning done — hide the thinking indicator, reveal the recommendation
+    if (thinking) tl.to(thinking, { opacity: 0, duration: 0.25, onComplete: () => { thinking.hidden = true; } }, ">+0.05");
     // then the recommendation, now that the "why" is visible
     tl.fromTo(card, { opacity: 0, y: 16, scale: 0.97 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.3)" }, ">+0.1");
+      { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.3)" }, ">");
     tl.fromTo(reasons, { opacity: 0, x: -8 },
       { opacity: 1, x: 0, duration: 0.3, stagger: 0.09 }, "-=0.1");
     animateNumber($('[data-num="value"]'), 12000, null, true);
+  }
+
+  /* ============================================================
+     AMBIENT — floating light dust, keeps the page alive
+     ============================================================ */
+  function buildAmbient() {
+    const host = $("[data-ambient]");
+    if (!host || reduceMotion) return;
+    const n = isSmall() ? 14 : 26;
+    for (let i = 0; i < n; i++) {
+      const d = document.createElement("span");
+      d.className = "dust";
+      const size = 2 + Math.random() * 3.5;
+      d.style.width = d.style.height = size.toFixed(1) + "px";
+      d.style.left = (Math.random() * 100).toFixed(2) + "%";
+      d.style.top = (Math.random() * 100).toFixed(2) + "%";
+      host.appendChild(d);
+      gsap.to(d, { x: (Math.random() * 2 - 1) * 46, y: (Math.random() * 2 - 1) * 46,
+        duration: 7 + Math.random() * 7, ease: "sine.inOut", yoyo: true, repeat: -1, delay: Math.random() * 5 });
+      gsap.to(d, { opacity: 0.12 + Math.random() * 0.45,
+        duration: 2.5 + Math.random() * 3, ease: "sine.inOut", yoyo: true, repeat: -1, delay: Math.random() * 4 });
+    }
   }
 
   /* ============================================================
@@ -597,6 +642,7 @@
   function init() {
     buildStepper();
     buildChips();
+    buildAmbient();
     backBtn.addEventListener("click", () => goTo(current - 1));
     replayBtn.addEventListener("click", replayDemo);
 

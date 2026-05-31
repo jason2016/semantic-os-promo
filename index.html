@@ -18,6 +18,8 @@
   <div class="bg-dots" aria-hidden="true"></div>
   <div class="bg-blob bg-blob--1" aria-hidden="true"></div>
   <div class="bg-blob bg-blob--2" aria-hidden="true"></div>
+  <!-- floating light dust — keeps the page alive (built by app.js) -->
+  <div class="ambient" data-ambient aria-hidden="true"></div>
 
   <!-- ============ TOP BAR + STEPPER ============ -->
   <header class="topbar">
@@ -48,6 +50,7 @@
 
       <!-- Step 2: AI finds the same person (magnet convergence) -->
       <div class="widget" data-w="connect">
+        <span class="cn-bloom" data-cn-bloom aria-hidden="true"></span>
         <svg class="cn-edges" data-cn-edges preserveAspectRatio="none" aria-hidden="true"></svg>
         <div class="cn-nodes" data-cn-nodes></div>
         <div class="cn-badge" data-cn-badge hidden>
@@ -70,8 +73,9 @@
         </div>
       </div>
 
-      <!-- Step 3: AI finds the opportunity (chain → big money reveal) -->
+      <!-- Step 3: AI finds the opportunity (glowing river → €12,000 reveal) -->
       <div class="widget" data-w="understand">
+        <span class="understand-flash" data-understand-flash aria-hidden="true"></span>
         <div class="causal" data-causal></div>
         <div class="money" data-money hidden>
           <span class="money__glow" aria-hidden="true"></span>
@@ -86,6 +90,10 @@
           <div class="ask__bar">
             <span class="ask__icon" aria-hidden="true">🔍</span>
             <span class="ask__q">What should I do next?</span>
+          </div>
+          <div class="ask__thinking" data-ask-thinking hidden>
+            <span class="ask__dot"></span><span class="ask__dot"></span><span class="ask__dot"></span>
+            AI is reasoning…
           </div>
           <div class="ask__path" data-ask-path>
             <span class="ask__step"><i class="ask__num">1</i><span>Marie Chen</span></span>
